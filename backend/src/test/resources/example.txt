@@ -1,0 +1,14 @@
+<6>1 2019-08-14T07:02:47.452333+02:00 tobi kernel - - - [ 1998.769525] usb 2-1.2: new full-speed USB device number 8 using ehci-pci
+<6>1 2019-08-14T07:02:54.687455+02:00 tobi kernel - - - [ 2006.005479] usb 2-1.2: new full-speed USB device number 9 using ehci-pci
+<6>1 2019-08-14T07:02:54.803611+02:00 tobi kernel - - - [ 2006.120472] usb 2-1.2: New USB device found, idVendor=0a12, idProduct=0001
+<6>1 2019-08-14T07:02:54.803635+02:00 tobi kernel - - - [ 2006.120478] usb 2-1.2: New USB device strings: Mfr=0, Product=2, SerialNumber=0
+<6>1 2019-08-14T07:02:54.803637+02:00 tobi kernel - - - [ 2006.120481] usb 2-1.2: Product: CSR8510 A10
+<30>1 2019-08-14T07:02:54.808704+02:00 tobi systemd 1 - -  Starting Load/Save RF Kill Switch Status...
+<30>1 2019-08-14T07:02:54.838833+02:00 tobi systemd 1 - -  Started Load/Save RF Kill Switch Status.
+<30>1 2019-08-14T07:02:54.839224+02:00 tobi systemd 1 - -  Reached target Bluetooth.
+<12>1 2019-08-14T07:02:54.859264+02:00 tobi upowerd 2215 - -  unhandled action 'bind' on /sys/devices/pci0000:00/0000:00:1d.0/usb2/2-1/2-1.2/2-1.2:1.1
+<12>1 2019-08-14T07:02:54.862985+02:00 tobi upowerd 2215 - -  unhandled action 'bind' on /sys/devices/pci0000:00/0000:00:1d.0/usb2/2-1/2-1.2/2-1.2:1.0
+<12>1 2019-08-14T07:02:54.863155+02:00 tobi upowerd 2215 - -  unhandled action 'bind' on /sys/devices/pci0000:00/0000:00:1d.0/usb2/2-1/2-1.2
+<14>1 2019-08-14T07:02:55.002172+02:00 tobi NetworkManager 998 - -  <info>  [1565758974.9994] bluez5: NAP: added interface 00:15:83:F4:CF:A8
+<30>1 2019-08-14T07:02:55.018717+02:00 tobi bluetoothd 1000 - -  Endpoint registered: sender=:1.61 path=/MediaEndpoint/A2DPSource
+<30>1 2019-08-14T07:02:55.021287+02:00 tobi bluetoothd 1000 - -  Endpoint registered: sender=:1.61 path=/MediaEndpoint/A2DPSink

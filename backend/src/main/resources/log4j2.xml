@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration monitorInterval="5">
+  <Appenders>
+    <Console name="STDOUT" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d %-5p [%t] %C:%L - %m%n "/>
+    </Console>
+    <File name="file" fileName="/tmp/app.log">
+      <PatternLayout pattern="%d %-5p [%t] %C:%L - %m%n"/>
+    </File>
+  </Appenders>
+  <Loggers>
+    <Logger name="postgresqlstorage" level="trace"/> -->
+    <Logger name="de.codesourcery" level="trace"/> -->
+    <Root level="info">
+      <AppenderRef ref="STDOUT"/>
+      <!--  <AppenderRef ref="file"/> -->
+    </Root>
+  </Loggers>
+</Configuration>
