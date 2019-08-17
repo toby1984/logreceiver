@@ -12,5 +12,7 @@ public interface IScanner
 
     char peek();
 
+    boolean consume(char c);
+
     int offset();
 }

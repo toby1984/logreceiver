@@ -73,6 +73,19 @@ public class Scanner implements IScanner
         return eof;
     }
 
+    public boolean consume(char c) {
+        if ( eof() ) {
+            return false;
+        }
+        char actual = buffer[bufferPtr];
+        if ( actual != c ) {
+            return false;
+        }
+        offset++;
+        bufferPtr++;
+        return true;
+    }
+
     @Override
     public char next()
     {

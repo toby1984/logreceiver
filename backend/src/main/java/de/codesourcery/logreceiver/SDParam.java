@@ -13,6 +13,24 @@ public final class SDParam
         this.id = id;
     }
 
+    public String toString() {
+        if ( paramPtr == 0 ) {
+            return id;
+        }
+        StringBuilder result = new StringBuilder();
+        result.append( id ).append( '{' );
+        for ( int i = 0 ; i < paramPtr ; i++)
+        {
+            result.append(paramNames[i]).append('=').append(paramValues[i]);
+            if ( (i+1) < paramPtr )
+            {
+                result.append(',');
+            }
+        }
+        result.append('}');
+        return result.toString();
+    }
+
     public void addParam(String key,String value)
     {
         if ( paramNames == null || paramPtr == paramNames.length ) {

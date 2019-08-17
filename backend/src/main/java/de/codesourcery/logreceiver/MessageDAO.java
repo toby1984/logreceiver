@@ -41,6 +41,7 @@ public class MessageDAO
                 msg.setTimestamp( rs.getTimestamp("log_ts").toInstant().atZone(UTC) );
                 msg.message = rs.getString("msg");
                 msg.priority = rs.getShort("priority");
+                msg.host = host;
                 // TODO: Map more fields ?
                 result.add( msg );
             }

@@ -4,10 +4,10 @@ import java.util.function.Supplier;
 
 public class LogParserFactory implements Supplier<ILogParser>
 {
-    private final ILogWriter writer;
+    private final ILogConsumer writer;
 
 
-    public LogParserFactory(ILogWriter writer)
+    public LogParserFactory(ILogConsumer writer)
     {
         this.writer = writer;
     }

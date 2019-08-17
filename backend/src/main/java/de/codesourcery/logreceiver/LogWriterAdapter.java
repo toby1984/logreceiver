@@ -1,10 +1,10 @@
 package de.codesourcery.logreceiver;
 
-public class LogWriterAdapter implements ILogWriter
+public class LogWriterAdapter implements ILogConsumer
 {
-    private final ILogWriter delegate;
+    private final ILogConsumer delegate;
 
-    public LogWriterAdapter(ILogWriter delegate)
+    public LogWriterAdapter(ILogConsumer delegate)
     {
         this.delegate = delegate;
     }

@@ -25,8 +25,9 @@ public class SyslogMessage implements Serializable
     public int tzHours;
     public int tzMinutes;
 
-    public String hostName;
+    public String hostName; // host name from RFC5424 message
     public InetAddress address;
+    public Host host;
 
     public String appName;
     public String procId;

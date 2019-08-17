@@ -1,13 +1,10 @@
 package de.codesourcery.logreceiver;
 
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public class SQLLogWriter implements ILogWriter
+public class SQLLogWriter implements ILogConsumer
 {
     private static final String SQL_NULL = "null";
     private static final char COL_DELIMITER = '|';

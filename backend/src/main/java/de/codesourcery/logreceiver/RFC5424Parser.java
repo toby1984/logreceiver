@@ -1,7 +1,5 @@
 package de.codesourcery.logreceiver;
 
-import org.apache.logging.log4j.core.layout.SyslogLayout;
-
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
@@ -12,14 +10,17 @@ public class RFC5424Parser implements ILogParser
     private static final org.apache.logging.log4j.Logger LOG = org.apache.logging.log4j.LogManager.getLogger( RFC5424Parser.class.getName() );
 
     private final Scanner scanner = new Scanner();
-    private final ILogWriter logWriter;
+    private final ILogConsumer logWriter;
 
     private final SyslogMessage message = new SyslogMessage();
 
     private final StringBuilder buffer = new StringBuilder();
 
-    public RFC5424Parser(ILogWriter logWriter) {
+    private final IHostManager hostManager;
+
+    public RFC5424Parser(IHostManager hostManager,ILogConsumer logWriter) {
         this.logWriter = logWriter;
+        this.hostManager = hostManager;
     }
 
     @Override
@@ -184,9 +185,11 @@ public class RFC5424Parser implements ILogParser
 
     private void parseHostname() {
         if ( maybeParseNilValue() ) {
+            message.host = hostManager.getOrCreateHost( message.address, null );
             return;
         }
         message.hostName = parseUSAscii( 255 );
+        message.host = hostManager.getOrCreateHost( message.address, message.hostName );
     }
 
     private void parseAppName() {
@@ -348,19 +351,13 @@ public class RFC5424Parser implements ILogParser
 
     private boolean maybeConsume(char c)
     {
-        if ( scanner.eof() ) {
-            return false;
-        }
-        if ( scanner.peek() != c ) {
-            return false;
-        }
-        scanner.next();
-        return true;
+        return scanner.consume(c);
     }
 
-    private void consume(char c) {
-        if ( ! maybeConsume( c ) ) {
-            fail("Scanner is at EOF but we expected '"+c+"'");
+    private void consume(char c)
+    {
+        if ( ! scanner.consume( c ) ) {
+            fail("Expected '"+c+"'");
         }
     }
 }
