@@ -19,6 +19,9 @@ public class PostgreSQLStorage implements ILogStorage
     private final org.apache.logging.log4j.Logger LOG = org.apache.logging.log4j.LogManager.getLogger( PostgreSQLStorage.class );
     private static final DateTimeFormatter PG_DATE_FORMAT = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ssZ" );
 
+    // Columns for COPY statement
+    private static final String COPY_COLUMNS = "priority,log_ts,log_ts_fraction,host_id,app_name,proc_id,msg_id,params,msg";
+
     private final EternalThread watchdog;
 
     // @GuardedBy(buffer)
@@ -66,17 +69,25 @@ public class PostgreSQLStorage implements ILogStorage
             {
                 final String parentTable = createParentTableName(host);
 
-                stmt.execute("CREATE TABLE IF NOT EXISTS "+ parentTable +" (" +
-                             "priority smallint NOT NULL,"+
-                             "log_ts timestamptz NOT NULL,"+
-                             "log_ts_fraction integer NOT NULL,"+
-                             "host_id bigint NOT NULL,"+
-                             "app_name text DEFAULT NULL,"+
-                             "proc_id text DEFAULT NULL,"+
-                             "msg_id text DEFAULT NULL,"+
-                             "params jsonb DEFAULT NULL,"+
-                             "msg text DEFAULT NULL"+
-                             ") PARTITION BY RANGE(log_ts)");
+                final String seqName = "seq_"+parentTable;
+                stmt.execute( "CREATE SEQUENCE IF NOT EXISTS " + seqName );
+
+                stmt.execute( "CREATE TABLE IF NOT EXISTS " + parentTable + " (" +
+                        // TODO: PostgreSQL 11 does not support UNIQUE constraints on columns
+                        // that are not part of the partition key (see https://www.postgresql.org/message-id/979372cf-ac21-6b5e-7987-5033fe53c2c2%40lab.ntt.co.jp)
+                        // ...maybe this gets fixed and then we can actually declare
+                        // this column as unique
+                        "entry_id bigint NOT NULL DEFAULT nextval('"+seqName+"')," +
+                        "priority smallint NOT NULL," +
+                        "log_ts timestamptz NOT NULL," +
+                        "log_ts_fraction integer NOT NULL," +
+                        "host_id bigint NOT NULL," +
+                        "app_name text DEFAULT NULL," +
+                        "proc_id text DEFAULT NULL," +
+                        "msg_id text DEFAULT NULL," +
+                        "params jsonb DEFAULT NULL," +
+                        "msg text DEFAULT NULL" +
+                        ") PARTITION BY RANGE(log_ts)" );
 
                 stmt.execute( "CREATE INDEX ON "+parentTable+"(log_ts)");
 
@@ -105,7 +116,7 @@ public class PostgreSQLStorage implements ILogStorage
             final Reader reader = new InputStreamReader( new ByteArrayInputStream( sql.getBytes() ) );
             try (BaseConnection con = ds.getConnection().unwrap( BaseConnection.class ))
             {
-                long rowsInserted = new CopyManager( con ).copyIn( "COPY " + partitionName + " FROM STDIN (DELIMITER '|')", reader );
+                long rowsInserted = new CopyManager( con ).copyIn( "COPY " + partitionName + "("+COPY_COLUMNS+") FROM STDIN (DELIMITER '|')", reader );
                 if ( LOG.isTraceEnabled() ) {
                     LOG.trace("flushBuffer(): Wrote "+rowsInserted+" rows to database.");
                 }

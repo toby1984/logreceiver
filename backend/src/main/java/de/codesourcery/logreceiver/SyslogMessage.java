@@ -11,6 +11,7 @@ public class SyslogMessage implements Serializable
     public static final ZoneId UTC = ZoneId.of( "UTC" );
 
     // other
+    public long id;
     private ZonedDateTime cachedTimestamp;
     public InetAddress address;
     public Host host;

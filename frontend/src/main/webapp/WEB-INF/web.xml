@@ -29,17 +29,19 @@
   <servlet>
     <servlet-name>rest-api</servlet-name>
     <servlet-class>de.codesourcery.logreceiver.ui.servlet.RESTServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
   </servlet>
 
   <servlet-mapping>
     <servlet-name>rest-api</servlet-name>
-    <url-pattern>/api/*</url-pattern>
+    <url-pattern>/api</url-pattern>
   </servlet-mapping>
 
   <security-role>
     <role-name>wsuser</role-name>
   </security-role>
 
+    <!--
   <security-constraint>
 
     <web-resource-collection>
@@ -56,6 +58,7 @@
     </user-data-constraint>
 
   </security-constraint>
+-->
 
   <security-constraint>
     <web-resource-collection>

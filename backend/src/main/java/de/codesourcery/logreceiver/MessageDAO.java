@@ -38,6 +38,7 @@ public class MessageDAO
             final List<SyslogMessage> result = new ArrayList<>();
             while ( rs.next() ) {
                 final SyslogMessage msg = new SyslogMessage();
+                msg.id = rs.getLong("entry_id");
                 msg.setTimestamp( rs.getTimestamp("log_ts").toInstant().atZone(UTC) );
                 msg.message = rs.getString("msg");
                 msg.priority = rs.getShort("priority");
