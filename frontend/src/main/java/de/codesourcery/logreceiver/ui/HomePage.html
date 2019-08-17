@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org/">
+<wicket:head>
 <head>
   <style>
+  body {
+    background-color: black;
+    color: lawngreen;
+  }
   table:nth-child(2) {
     background-color: blue;
   }
+    #container {
+      border: 1px solid lawngreen;
+    }
   </style>
 </head>
+</wicket:head>
 <body>
 <wicket:extend>
   <form wicket:id="form">
@@ -18,18 +27,8 @@
         <a style="display:inline-block;margin-left: 0" href="#" wicket:id="previous">Older</a>
         <a style="display:inline-block;margin-right: 0" href="#" wicket:id="next">Newer</a>
       </div>
-      <table wicket:id="container">
-        <tr>
-          <th>Timestamp</th>
-          <th>Priority</th>
-          <th>Message</th>
-        </tr>
-        <tr wicket:id="dataTable">
-          <td><wicket:container wicket:id="timestamp"/></td>
-          <td><wicket:container wicket:id="prio"/></td>
-          <td><wicket:container wicket:id="message"/></td>
-        </tr>
-      </table>
+      <div id="container" wicket:id="container">
+      </div>
     </div>
   </form>
 </wicket:extend>

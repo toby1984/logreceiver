@@ -1,8 +1,10 @@
 package de.codesourcery.logreceiver.ui;
 
+import de.codesourcery.logreceiver.Configuration;
 import de.codesourcery.logreceiver.Host;
 import de.codesourcery.logreceiver.IAPI;
 import de.codesourcery.logreceiver.SyslogMessage;
+import de.codesourcery.logreceiver.formatting.PatternLogFormatter;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -18,6 +20,7 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.spring.injection.annot.SpringBean;
+import org.apache.wicket.util.string.Strings;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,14 +39,15 @@ public class HomePage extends BasePage
 
     private Host selectedHost;
 
+    @SpringBean
+    private Configuration config;
+
     @SpringBean(name="api")
     private IAPI api;
 
     private ZonedDateTime refDate=ZonedDateTime.now();
     private boolean ascending=false;
     private boolean moreAvailable;
-
-    private ListView<SyslogMessage> repeater;
 
     private final IModel<List<SyslogMessage>> provider = new LoadableDetachableModel<>()
     {
@@ -71,9 +75,34 @@ public class HomePage extends BasePage
     {
         super.onInitialize();
 
-        final WebMarkupContainer repeaterContainer = new WebMarkupContainer("container");
-        repeaterContainer.setRenderBodyOnly(false);
-        repeaterContainer.setOutputMarkupPlaceholderTag(true);
+        final IModel<String> logModel = new IModel<>()
+        {
+            private String result;
+
+            @Override
+            public void detach()
+            {
+                provider.detach();
+                result = null;
+            }
+
+            @Override
+            public String getObject()
+            {
+                if ( result == null ) {
+                    final List<SyslogMessage> messages = provider.getObject();
+                    final PatternLogFormatter formatter = PatternLogFormatter.ofPattern( config.defaultLogDisplayPattern );
+                    result = messages.stream()
+                            .map( formatter::format )
+                            .map( Strings::escapeMarkup)
+                            .collect( Collectors.joining("<br>"));
+                }
+                return result;
+            }
+        };
+        final Label repeaterContainer = new Label("container",logModel);
+        repeaterContainer.setEscapeModelStrings( false );
+        repeaterContainer.setOutputMarkupId( true );
 
         final IModel<List<Host>> choiceModel = () -> api.getAllHosts().stream().sorted(Comparator.comparing(a -> a.hostName)).collect(Collectors.toList());
         final IChoiceRenderer<Host> renderer = new ChoiceRenderer<>() {
@@ -149,27 +178,9 @@ public class HomePage extends BasePage
         };
         newer.setOutputMarkupPlaceholderTag(true);
 
-        // table
-        repeater = new ListView<>("dataTable",provider)
-        {
-            @Override
-            protected ListItem<SyslogMessage> newItem(int index, IModel<SyslogMessage> itemModel)
-            {
-                return new OddEvenListItem<>(index, itemModel);
-            }
-
-            @Override
-            protected void populateItem(ListItem<SyslogMessage> item)
-            {
-                item.add( new Label("timestamp", () -> FORMAT.format(item.getModelObject().getTimestamp())));
-                item.add( new Label("prio", () -> item.getModelObject().priority));
-                item.add( new Label("message", () -> item.getModelObject().message));
-            }
-        };
-
         // form
         final Form form = new Form<>("form");
 
-        queue(form,choice,repeater,older,newer,repeaterContainer);
+        queue(form,choice,older,newer,repeaterContainer);
     }
 }

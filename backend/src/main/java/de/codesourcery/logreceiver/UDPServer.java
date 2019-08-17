@@ -168,7 +168,7 @@ public class UDPServer
     private void read(SelectionKey key)
     {
         if ( LOG.isDebugEnabled() ) {
-            LOG.debug("process(): Received a UDP packet on "+config.udpPort);
+            LOG.debug("process(): Received a UDP packet on port "+config.udpPort);
         }
         final DatagramChannel chan = (DatagramChannel) key.channel();
         final PacketBuffer packet = (PacketBuffer) key.attachment();

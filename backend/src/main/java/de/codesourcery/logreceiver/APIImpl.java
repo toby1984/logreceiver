@@ -21,6 +21,12 @@ public class APIImpl implements IAPI
     }
 
     @Override
+    public List<SyslogMessage> getMessages(Host host, long entryId, boolean ascending, int maxCount)
+    {
+        return dao.getMessages(host,entryId,ascending,maxCount);
+    }
+
+    @Override
     public List<Host> getAllHosts()
     {
         return hostManager.getAllHosts();

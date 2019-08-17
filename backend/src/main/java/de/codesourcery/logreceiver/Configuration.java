@@ -1,5 +1,7 @@
 package de.codesourcery.logreceiver;
 
+import de.codesourcery.logreceiver.formatting.ILogFormatter;
+
 import java.time.Duration;
 
 public class Configuration
@@ -26,4 +28,7 @@ public class Configuration
     public Duration defaultDataRetentionTime = Duration.ofDays( 7 );
 
     public Duration staleBackendUnloadCheckInterval = Duration.ofMinutes( 30 );
+
+    // UI
+    public String defaultLogDisplayPattern="%Y-%m-%d %H:%M:%s.%S%Z %D(%i) %t";
 }

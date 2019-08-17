@@ -91,6 +91,10 @@ public class PostgreSQLStorage implements ILogStorage
 
                 stmt.execute( "CREATE INDEX ON "+parentTable+"(log_ts)");
 
+                // TODO: again, this is actually a UNIQUE index but PG11 does not support unique indices for partitioned tables
+                // when the column is not part of the partitioning criteria
+                stmt.execute( "CREATE INDEX ON "+parentTable+"(entry_id)");
+
                 stmt.execute("CREATE TABLE IF NOT EXISTS "+ partitionName +" PARTITION OF "+parentTable+" FOR VALUES FROM " +
                              "('"+PG_DATE_FORMAT.format( interval.start )+"') TO "+
                              "('"+PG_DATE_FORMAT.format( interval.end)+"')");

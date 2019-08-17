@@ -19,7 +19,15 @@ public class MessageDAO
         helper = new JDBCHelper(datasource);
     }
 
-    public List<SyslogMessage> getMessages(Host host, ZonedDateTime referenceDate, boolean ascending, int maxCount)
+    public List<SyslogMessage> getMessages(Host host, long entryId, boolean ascending, int maxCount) {
+        return getMessages(host,"entry_id",Long.toString(entryId),ascending,maxCount);
+    }
+
+    public List<SyslogMessage> getMessages(Host host, ZonedDateTime referenceDate, boolean ascending, int maxCount) {
+        return getMessages(host,"log_ts",JDBCHelper.toPostgreSQLDate(referenceDate),ascending,maxCount);
+    }
+
+    private List<SyslogMessage> getMessages(Host host, String col, String value, boolean ascending, int maxCount)
     {
         final String op;
         final String orderBy;
@@ -30,8 +38,9 @@ public class MessageDAO
             orderBy = "DESC";
             op = "<";
         }
-        final String sql = "SELECT * FROM "+PartitionNamePattern.TABLE_NAME_PREFIX+host.hostName +" WHERE log_ts "+op+" "
-            +JDBCHelper.toPostgreSQLDate(referenceDate)+" ORDER BY log_ts "+orderBy+" LIMIT "+maxCount;
+        final String sql = "SELECT * FROM "+PartitionNamePattern.TABLE_NAME_PREFIX+host.hostName +
+                " WHERE "+col+" "+op+" "
+            +value+" ORDER BY "+col+" "+orderBy+" LIMIT "+maxCount;
 
         return helper.execQuery(sql,rs ->
         {
@@ -43,7 +52,7 @@ public class MessageDAO
                 msg.message = rs.getString("msg");
                 msg.priority = rs.getShort("priority");
                 msg.host = host;
-                // TODO: Map more fields ?
+                // TODO: Map more fields
                 result.add( msg );
             }
             return result;
