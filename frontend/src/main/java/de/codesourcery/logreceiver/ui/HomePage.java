@@ -25,6 +25,7 @@ import org.apache.wicket.util.string.Strings;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -91,11 +92,16 @@ public class HomePage extends BasePage
             {
                 if ( result == null ) {
                     final List<SyslogMessage> messages = provider.getObject();
+
+                    final StringBuilder buffer = new StringBuilder();
                     final PatternLogFormatter formatter = PatternLogFormatter.ofPattern( config.defaultLogDisplayPattern );
-                    result = messages.stream()
-                            .map( formatter::format )
-                            .map( Strings::escapeMarkup)
-                            .collect( Collectors.joining("<br>"));
+                    for ( int i = messages.size()-1 ; i >= 0 ; i-- ) {
+                        buffer.append( Strings.escapeMarkup( formatter.format( messages.get(i) ) ) );
+                        if ( i != 0 ) {
+                            buffer.append("<br>");
+                        }
+                    }
+                    result = buffer.toString();
                 }
                 return result;
             }
