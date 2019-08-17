@@ -81,6 +81,12 @@ public class UDPServer
     @PostConstruct
     public void run() throws IOException, InterruptedException
     {
+        if ( ! config.startUDPServer ) {
+            LOG.info( "run(): =============================" );
+            LOG.info( "run(): UDP server disabled in configuration." );
+            LOG.info( "run(): =============================" );
+            return;
+        }
         final CountDownLatch started = new CountDownLatch(1);
         final AtomicReference<IOException> result = new AtomicReference<>();
         final Thread thread = new Thread(() ->

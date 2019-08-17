@@ -26,17 +26,15 @@
     <url-pattern>/ui/*</url-pattern>
   </filter-mapping>
 
-  <!--
   <servlet>
     <servlet-name>rest-api</servlet-name>
-    <servlet-class>com.vodecc.voipmng.boundary.servlet.SIPMessagesServlet</servlet-class>
+    <servlet-class>de.codesourcery.logreceiver.ui.servlet.RESTServlet</servlet-class>
   </servlet>
 
   <servlet-mapping>
     <servlet-name>rest-api</servlet-name>
     <url-pattern>/api/*</url-pattern>
   </servlet-mapping>
--->
 
   <security-role>
     <role-name>wsuser</role-name>

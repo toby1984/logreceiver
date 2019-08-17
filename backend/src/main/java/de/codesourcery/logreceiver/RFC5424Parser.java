@@ -228,7 +228,7 @@ public class RFC5424Parser implements ILogParser
         }
 
         // YYYY
-        message.year = (byte) parseFixedLengthNumber("year (YYYY)",4, num -> num > 0);
+        message.year = (short) parseFixedLengthNumber("year (YYYY)",4, num -> num > 0);
         consume('-' );
         message.month = (byte) parseFixedLengthNumber("month (MM)",2, num -> num > 0 && num < 13);
         consume('-' );

@@ -13,6 +13,7 @@ public class Configuration
     public int dbConnectionPoolSize = 10;
 
     // network
+    public boolean startUDPServer = true;
     public int udpPort = 1234;
     public int maxReceiveBufferSize = 2048; // also limits max. length of log message that can be received
 

@@ -33,10 +33,12 @@
     </bean>
 
     <bean name="parser" class="de.codesourcery.logreceiver.RFC5424Parser" scope="prototype">
+        <constructor-arg ref="hostIdManager"/>
         <constructor-arg ref="logWriter"/>
     </bean>
 
     <bean name="logParserFactory" class="de.codesourcery.logreceiver.LogParserFactory">
+        <constructor-arg ref="hostIdManager"/>
         <constructor-arg ref="logWriter"/>
     </bean>
 
