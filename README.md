@@ -30,11 +30,16 @@ You obviously want to substitute the hostname with the host running the applicat
 
 Items will be implemented in the order shown.
 
+### Story: Implement paging through logs of a given host
+    - REST API
+    - Implement paging on client-side
+
+### Story: Implement real-time view of logs for a given host
+- Implement on client-side using websockets and continuous updates
+
 ### Story: Data storage
-    - backend: add sequence id to log message tables (one sequence per parent table) and make UI use it for paging instead of the timestamps  
-    
-### Story: support running webapp without starting udp server
-         
+    - backend: make UI use sequence ID for paging instead of timestamps to avoid skipping over messages with the same timestamp
+   
 ### Story: Log filtering V1
     - UI: Add support for filtering by more than just the host
     - backend: support filtering using expressions like ( pri = 1 | pri = 2) && msg ~ 'dummy'    
