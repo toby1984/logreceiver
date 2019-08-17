@@ -32,14 +32,13 @@ public class SQLLogWriterTest
     public void setup()
     {
         msg.reset();
-        msg.year = 2019;
+        msg.year = (byte) 2019;
         msg.month = 8;
         msg.dayOfMonth = 18;
         msg.hour = 23;
         msg.minute = 40;
         msg.second = 18;
         msg.secondFrag = 123;
-        msg.posTZ = true;
         msg.tzHours = 2;
         msg.tzMinutes = 0;
 
@@ -65,16 +64,15 @@ public class SQLLogWriterTest
     @Test
     public void test4()
     {
-        msg.year = 1234;
+        msg.year = (byte) 1234;
         msg.month = 12;
         msg.dayOfMonth = 1;
         msg.hour = 2;
         msg.minute = 3;
         msg.second = 4;
         msg.secondFrag = 5;
-        msg.posTZ = false;
-        msg.tzHours = 6;
-        msg.tzMinutes = 7;
+        msg.tzHours = -6;
+        msg.tzMinutes = -7;
         
         writer.store(msg);
         assertEquals( "0|1234-12-1 2:3:4-6:7|5|null|null|null|null|null|null", storage.buffer.toString() );

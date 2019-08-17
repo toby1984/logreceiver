@@ -10,33 +10,26 @@ public class SyslogMessage implements Serializable
 {
     public static final ZoneId UTC = ZoneId.of( "UTC" );
 
-    public short priority;
-
+    // other
     private ZonedDateTime cachedTimestamp;
-
-    public int year;
-    public int month;
-    public int dayOfMonth;
-    public int hour;
-    public int minute;
-    public int second;
-    public int secondFrag;
-    public boolean posTZ;
-    public int tzHours;
-    public int tzMinutes;
-
-    public String hostName; // host name from RFC5424 message
     public InetAddress address;
     public Host host;
 
+    // protocol fields
     public String appName;
     public String procId;
     public String msgId;
-
-    public int paramCount;
-    public SDParam[] params = new SDParam[10];
-
+    public String hostName; // host name from RFC5424 message
     public String message;
+
+    public SDParam[] params = new SDParam[10];
+    public short priority;
+    public short year;
+    public int secondFrag;
+    public byte paramCount;
+    public byte month, dayOfMonth;
+    public byte hour, minute, second;
+    public byte tzHours, tzMinutes;
 
     public int getParamCount() {
         return paramCount;
@@ -56,8 +49,7 @@ public class SyslogMessage implements Serializable
             }
             else
             {
-                final int factor = posTZ ? 1 : -1;
-                final ZoneOffset offset = ZoneOffset.ofHoursMinutes(tzHours * factor, tzMinutes * factor);
+                final ZoneOffset offset = ZoneOffset.ofHoursMinutes(tzHours, tzMinutes);
                 zoneId = ZoneId.from(offset);
             }
             cachedTimestamp = ZonedDateTime.of(year, month, dayOfMonth, hour, minute, second, secondFrag, zoneId);
@@ -91,7 +83,6 @@ public class SyslogMessage implements Serializable
         minute=0;
         second=0;
         secondFrag=0;
-        posTZ=true;
         tzHours=0;
         tzMinutes=0;
         hostName = null;

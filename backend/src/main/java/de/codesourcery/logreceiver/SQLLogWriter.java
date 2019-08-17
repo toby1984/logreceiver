@@ -158,7 +158,7 @@ public class SQLLogWriter implements ILogConsumer
         buffer.append( message.minute ).append(':');
         buffer.append( message.second );
 
-        buffer.append( message.posTZ ? '+' : '-' );
+        buffer.append( message.tzHours >= 0 ? '+' : '-' );
         buffer.append( message.tzHours ).append(':').append( message.tzMinutes );
 
         currentField++;

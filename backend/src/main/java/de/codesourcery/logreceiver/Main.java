@@ -23,8 +23,7 @@ public class Main
         hostIdManager = new PostgreSQLHostIdManager( ds, config );
         storage = new DelegatingLogStorage( ds , hostIdManager, config );
         writer = new SQLLogWriter( storage,hostIdManager );
-        server = new UDPServer( config, new LogParserFactory( writer ) );
+        server = new UDPServer( config, new LogParserFactory( writer, hostIdManager ) );
         server.process();
     }
-
 }

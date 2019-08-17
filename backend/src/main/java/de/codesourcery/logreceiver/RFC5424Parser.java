@@ -228,27 +228,27 @@ public class RFC5424Parser implements ILogParser
         }
 
         // YYYY
-        message.year = parseFixedLengthNumber("year (YYYY)",4, num -> num > 0);
+        message.year = (byte) parseFixedLengthNumber("year (YYYY)",4, num -> num > 0);
         consume('-' );
-        message.month = parseFixedLengthNumber("month (MM)",2, num -> num > 0 && num < 13);
+        message.month = (byte) parseFixedLengthNumber("month (MM)",2, num -> num > 0 && num < 13);
         consume('-' );
-        message.dayOfMonth = parseFixedLengthNumber("monthday (DD)",2, num -> num > 0 && num < 32);
+        message.dayOfMonth = (byte) parseFixedLengthNumber("monthday (DD)",2, num -> num > 0 && num < 32);
 
         consume('T' );
 
-        message.hour = parseFixedLengthNumber("hour (HH)",2, num -> num >= 0 && num < 24);
+        message.hour = (byte) parseFixedLengthNumber("hour (HH)",2, num -> num >= 0 && num < 24);
         consume(':');
-        message.minute = parseFixedLengthNumber("minute (MM)",2, num -> num >= 0 && num < 60);
+        message.minute = (byte) parseFixedLengthNumber("minute (MM)",2, num -> num >= 0 && num < 60);
         consume(':');
-        message.second = parseFixedLengthNumber("seconds (SS)",2, num -> num >= 0 && num < 60);
+        message.second = (byte) parseFixedLengthNumber("seconds (SS)",2, num -> num >= 0 && num < 60);
 
         if ( maybeConsume( '.' ) ) {
             // fraction
             message.secondFrag = parseNumber( 6, "time sec-frag" );
         }
 
+        int factor = 1;
         if ( maybeConsume( 'Z' ) ) {
-            message.posTZ = true;
             message.tzHours = 0;
             message.tzMinutes = 0;
         }
@@ -256,16 +256,15 @@ public class RFC5424Parser implements ILogParser
         {
             if ( maybeConsume( '+' ) )
             {
-                message.posTZ = true;
             }
             else
             {
-                message.posTZ = !maybeConsume( '-' );
+                factor = maybeConsume( '-' ) ? -1 : 1;
             }
 
-            message.tzHours = parseFixedLengthNumber( "TZ offset hours", 2, x -> x >= 0 && x < 24 );
+            message.tzHours = (byte) parseFixedLengthNumber( "TZ offset hours", 2, x -> x >= 0 && x < 24 );
             consume(':');
-            message.tzMinutes = parseFixedLengthNumber( "TZ offset minutes", 2, x -> x >= 0 && x < 60 );
+            message.tzMinutes = (byte) parseFixedLengthNumber( "TZ offset minutes", 2, x -> x >= 0 && x < 60 );
         }
     }
 

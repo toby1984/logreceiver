@@ -31,8 +31,9 @@ public class ParserTest
             lines.add( line );
         }
 
-        final SQLLogWriter writer = new SQLLogWriter(storage,new InMemoryHostIdManager(new Configuration()) );
-        final ILogParser p = new RFC5424Parser( writer);
+        final InMemoryHostIdManager hostIdManager = new InMemoryHostIdManager( new Configuration() );
+        final SQLLogWriter writer = new SQLLogWriter(storage, hostIdManager );
+        final ILogParser p = new RFC5424Parser( hostIdManager , writer );
 
         final InetAddress localhost = InetAddress.getLocalHost();
         for ( String s : lines )
