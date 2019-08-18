@@ -59,4 +59,8 @@ public class PartitionNamePattern
         dt = dt.plusHours( partitionNo * config.hoursPerPartition );
         return new PartitionNamePattern(hostName,dt);
     }
+
+    public static String parentTableName(Host host) {
+        return PartitionNamePattern.TABLE_NAME_PREFIX + host.hostName;
+    }
 }

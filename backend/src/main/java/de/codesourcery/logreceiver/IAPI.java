@@ -5,9 +5,13 @@ import java.util.List;
 
 public interface IAPI
 {
+    List<SyslogMessage> getLatestMessages(Host host,int maxCount);
+
     List<SyslogMessage> getMessages(Host host, ZonedDateTime referenceDate,boolean ascending,int maxCount);
 
     List<SyslogMessage> getMessages(Host host, long entryId,boolean ascending,int maxCount);
 
     List<Host> getAllHosts();
+
+    Host getHost(long hostId);
 }

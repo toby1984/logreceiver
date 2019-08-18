@@ -25,18 +25,47 @@
 </wicket:head>
 <body>
 <wicket:extend>
-  <form wicket:id="form">
-    <select wicket:id="hostSelect">
+  <form>
+    <select id="hostSelection">
     </select>
     <div>
       <div>
-        <a style="display:inline-block;margin-left: 0" href="#" wicket:id="previous">Older</a>
-        <a style="display:inline-block;margin-right: 0" href="#" wicket:id="next">Newer</a>
+        <a style="display:inline-block;margin-left: 0" href="#" >Older</a>
+        <a style="display:inline-block;margin-right: 0" href="#" >Newer</a>
       </div>
-      <div id="container" wicket:id="container">
+      <div id="container">
       </div>
     </div>
   </form>
+  <script>
+
+    function removeAllChildren(parent)
+    {
+      var child = parent.lastElementChild;
+      while (child) {
+        parent.removeChild(child);
+        child = e.lastElementChild;
+      }
+    }
+
+    function reqListener ()
+    {
+      var hosts = JSON.parse(this.responseText);
+      var parent = document.getElementById("hostSelection")
+      removeAllChildren(parent);
+      hosts.forEach(host =>
+      {
+        var element = document.createElement('option');
+        element.setAttribute("value", host.id );
+        element.innerHTML=host.hostName;
+        parent.addElement(element);
+      });
+    }
+    var oReq = new XMLHttpRequest();
+    oReq.addEventListener("load", reqListener);
+    oReq.open("GET", "http://localhost:8080/logreceiver/api?cmd=getHosts");
+    oReq.send();
+  </script>
 </wicket:extend>
 </body>
 </html>

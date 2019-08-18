@@ -15,6 +15,12 @@ public class APIImpl implements IAPI
     }
 
     @Override
+    public List<SyslogMessage> getLatestMessages(Host host, int maxCount)
+    {
+        return dao.getLatestMessages( host, maxCount);
+    }
+
+    @Override
     public List<SyslogMessage> getMessages(Host host, ZonedDateTime referenceDate, boolean ascending, int maxCount)
     {
         return dao.getMessages(host,referenceDate,ascending,maxCount);
@@ -30,5 +36,11 @@ public class APIImpl implements IAPI
     public List<Host> getAllHosts()
     {
         return hostManager.getAllHosts();
+    }
+
+    @Override
+    public Host getHost(long hostId)
+    {
+        return hostManager.getHost( hostId );
     }
 }
