@@ -9,8 +9,9 @@
     </File>
   </Appenders>
   <Loggers>
-    <Logger name="postgresqlstorage" level="trace"/> -->
-    <Logger name="de.codesourcery" level="trace"/> -->
+    <Logger name="postgresqlstorage" level="trace"/>
+    <Logger name="de.codesourcery" level="trace"/>
+    <Logger name="de.codesourcery.logreceiver.receiving.UDPServer" level="info"/>
     <Root level="info">
       <AppenderRef ref="STDOUT"/>
       <!--  <AppenderRef ref="file"/> -->

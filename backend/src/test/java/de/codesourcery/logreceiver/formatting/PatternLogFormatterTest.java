@@ -1,12 +1,14 @@
 package de.codesourcery.logreceiver.formatting;
 
-import de.codesourcery.logreceiver.Host;
-import de.codesourcery.logreceiver.SDParam;
-import de.codesourcery.logreceiver.SyslogMessage;
+import de.codesourcery.logreceiver.entity.Host;
+import de.codesourcery.logreceiver.entity.SDParam;
+import de.codesourcery.logreceiver.entity.SyslogMessage;
 import org.junit.Test;
 
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -85,15 +87,10 @@ public class PatternLogFormatterTest
     private SyslogMessage testMessage() throws UnknownHostException
     {
         final SyslogMessage msg = new SyslogMessage();
-        msg.year = 1974;
-        msg.month = 12;
-        msg.dayOfMonth = 11;
-        msg.hour = 10;
-        msg.minute = 9;
-        msg.second = 8;
-        msg.secondFrag = 7;
-        msg.tzHours = -3;
-        msg.tzMinutes= -30;
+
+        final ZoneId zoneId = ZoneId.of( "UTC-0330");
+        msg.timestamp = ZonedDateTime.of( 1974, 12, 11,
+                                          10, 9, 8, 7, zoneId );
 
         msg.priority = 123;
         msg.procId = "procid";

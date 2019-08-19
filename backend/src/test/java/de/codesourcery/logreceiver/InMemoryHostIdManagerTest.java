@@ -1,5 +1,8 @@
 package de.codesourcery.logreceiver;
 
+import de.codesourcery.logreceiver.entity.Configuration;
+import de.codesourcery.logreceiver.entity.Host;
+import de.codesourcery.logreceiver.storage.InMemoryHostIdManager;
 import org.junit.Before;
 import org.junit.Test;
 

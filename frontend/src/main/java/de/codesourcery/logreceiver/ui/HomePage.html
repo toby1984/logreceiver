@@ -3,69 +3,67 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org/">
 <wicket:head>
   <style>
-  body {
-    background-color: black;
-    color: lawngreen;
-  }
-
-  select {
-    background-color: black;
-    color: lawngreen;
-  }
-
-  table:nth-child(2) {
-    background-color: blue;
-  }
-    #container {
-      border: 1px solid lawngreen;
-      width:95%;
-      height:500px;
+    body {
+      background-color: black;
+      color: lawngreen;
     }
+
+    select {
+      background-color: black;
+      color: lawngreen;
+    }
+
+    table:nth-child(2) {
+      background-color: blue;
+    }
+    #container {
+      font-family: monospace;
+      width:100%;
+      height:100%;
+    }
+#wrapper {
+    border: 1px solid lawngreen;
+    position: relative;
+    overflow:auto;
+    width: 100%;
+    height: 500px;
+}
   </style>
 </wicket:head>
 <body>
 <wicket:extend>
-  <form>
-    <select id="hostSelection">
-    </select>
+  <form id="myForm">
+    <label>Host: <select id="hostSelection"><option value="123">Dummy</option></select></label>
+    <label>Regex: <input type="text" id="regex"/></label>
+    <button type="button" onclick="wrapper.criteriaChanged(this)">Submit</button>
     <div>
       <div>
         <a style="display:inline-block;margin-left: 0" href="#" >Older</a>
         <a style="display:inline-block;margin-right: 0" href="#" >Newer</a>
       </div>
-      <div id="container">
+      <div id="wrapper">
+        <div id="container">
+        </div>
       </div>
     </div>
-  </form>
-  <script>
-
-    function removeAllChildren(parent)
-    {
-      var child = parent.lastElementChild;
-      while (child) {
-        parent.removeChild(child);
-        child = e.lastElementChild;
-      }
-    }
-
-    function reqListener ()
-    {
-      var hosts = JSON.parse(this.responseText);
-      var parent = document.getElementById("hostSelection")
-      removeAllChildren(parent);
-      hosts.forEach(host =>
-      {
-        var element = document.createElement('option');
-        element.setAttribute("value", host.id );
-        element.innerHTML=host.hostName;
-        parent.addElement(element);
+    <script src="scripts/HomePage.js" type="text/javascript"></script>
+    <script>
+      // page & websocket init
+      wrapper.init();
+      // intercept all form submissions
+      document.getElementById('myForm').addEventListener("submit", function(e) {
+        e.preventDefault();
+        wrapper.criteriaChanged();
+        return false;
       });
-    }
-    var oReq = new XMLHttpRequest();
-    oReq.addEventListener("load", reqListener);
-    oReq.open("GET", "http://localhost:8080/logreceiver/api?cmd=getHosts");
-    oReq.send();
-  </script>
+      // setup infinite scrolling
+      let wrapperDiv = document.getElementById("wrapper");
+      wrapperDiv.addEventListener("scroll", function (event)
+      {
+          wrapper.checkInfiniteScroll(true);
+      });
+    </script>
+  </form>
 </wicket:extend>
 </body>
 </html>

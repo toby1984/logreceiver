@@ -1,8 +1,16 @@
 package de.codesourcery.logreceiver;
 
+import de.codesourcery.logreceiver.entity.Configuration;
+import de.codesourcery.logreceiver.entity.Host;
+import de.codesourcery.logreceiver.entity.SDParam;
+import de.codesourcery.logreceiver.entity.SyslogMessage;
+import de.codesourcery.logreceiver.logstorage.ISQLLogStorage;
+import de.codesourcery.logreceiver.logstorage.SQLLogWriter;
+import de.codesourcery.logreceiver.storage.InMemoryHostIdManager;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import static org.junit.Assert.assertEquals;
@@ -12,8 +20,8 @@ public class SQLLogWriterTest
     private SQLLogWriter writer;
     private MockStorage storage;
 
-    public static final class MockStorage implements ILogStorage {
-
+    public static final class MockStorage implements ISQLLogStorage
+    {
         public final StringBuilder buffer = new StringBuilder();
         
         @Override
@@ -32,7 +40,9 @@ public class SQLLogWriterTest
     public void setup()
     {
         msg.reset();
-        msg.year = (byte) 2019;
+        msg.timestamp = null;
+        /*
+msg.year = (byte) 2019;
         msg.month = 8;
         msg.dayOfMonth = 18;
         msg.hour = 23;
@@ -41,7 +51,9 @@ public class SQLLogWriterTest
         msg.secondFrag = 123;
         msg.tzHours = 2;
         msg.tzMinutes = 0;
-
+         */
+         ZoneId id = ZoneId.of( "UTC+0200" );
+        msg.timestamp = ZonedDateTime.of( 2019,8,18,23,40,18,123, id);
         storage = new MockStorage();
         writer = new SQLLogWriter(storage, new InMemoryHostIdManager(new Configuration()) );
     }
@@ -64,16 +76,10 @@ public class SQLLogWriterTest
     @Test
     public void test4()
     {
-        msg.year = (byte) 1234;
-        msg.month = 12;
-        msg.dayOfMonth = 1;
-        msg.hour = 2;
-        msg.minute = 3;
-        msg.second = 4;
-        msg.secondFrag = 5;
-        msg.tzHours = -6;
-        msg.tzMinutes = -7;
-        
+        final ZoneId zoneId = ZoneId.of("UTC-0607");
+        msg.timestamp = ZonedDateTime.of( 1234,12,1,
+                                          2,3,4,5, zoneId );
+
         writer.store(msg);
         assertEquals( "0|1234-12-1 2:3:4-6:7|5|null|null|null|null|null|null", storage.buffer.toString() );
     }

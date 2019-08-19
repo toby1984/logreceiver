@@ -9,45 +9,53 @@
 
     <context:annotation-config/>
 
-    <bean name="config" class="de.codesourcery.logreceiver.Configuration">
+    <bean name="config" class="de.codesourcery.logreceiver.entity.Configuration">
     </bean>
 
-    <bean name="datasource" class="de.codesourcery.logreceiver.DataSourceFactory">
+    <bean name="datasource" class="de.codesourcery.logreceiver.util.DataSourceFactory">
         <constructor-arg ref="config" />
     </bean>
 
-    <bean name="hostIdManager" class="de.codesourcery.logreceiver.PostgreSQLHostIdManager">
+    <bean name="hostIdManager" class="de.codesourcery.logreceiver.logstorage.PostgreSQLHostIdManager">
         <constructor-arg ref="datasource"/>
         <constructor-arg ref="config"/>
     </bean>
 
-    <bean name="logStorage" class="de.codesourcery.logreceiver.DelegatingLogStorage">
+    <bean name="logStorage" class="de.codesourcery.logreceiver.logstorage.DelegatingLogStorage">
         <constructor-arg ref="datasource"/>
         <constructor-arg ref="hostIdManager"/>
         <constructor-arg ref="config"/>
     </bean>
 
-    <bean name="logWriter" class="de.codesourcery.logreceiver.SQLLogWriter">
+    <bean name="logWriter" class="de.codesourcery.logreceiver.logstorage.SQLLogWriter">
         <constructor-arg ref="logStorage"/>
         <constructor-arg ref="hostIdManager"/>
     </bean>
 
-    <bean name="parser" class="de.codesourcery.logreceiver.RFC5424Parser" scope="prototype">
+    <!--
+    <bean name="parser" class="de.codesourcery.logreceiver.parsing.RFC5424Parser" scope="prototype">
+        <constructor-arg ref="hostIdManager"/>
+        <constructor-arg ref="logWriter"/>
+        <constructor-arg ref="filterCallbackHelper"/>
+    </bean>
+-->
+
+    <bean name="filterCallbackHelper" class="de.codesourcery.logreceiver.filtering.FilterCallbackHelper" >
+        <constructor-arg ref="hostIdManager"/>
+        <constructor-arg ref="messageDAO"/>
+    </bean>
+
+    <bean name="logParserFactory" class="de.codesourcery.logreceiver.parsing.LogParserFactory">
         <constructor-arg ref="hostIdManager"/>
         <constructor-arg ref="logWriter"/>
     </bean>
 
-    <bean name="logParserFactory" class="de.codesourcery.logreceiver.LogParserFactory">
-        <constructor-arg ref="hostIdManager"/>
-        <constructor-arg ref="logWriter"/>
-    </bean>
-
-    <bean name="udpServer" class="de.codesourcery.logreceiver.UDPServer" lazy-init="false">
+    <bean name="udpServer" class="de.codesourcery.logreceiver.receiving.UDPServer" lazy-init="false">
         <constructor-arg ref="config"/>
         <constructor-arg ref="logParserFactory"/>
     </bean>
 
-    <bean name="messageDAO" class="de.codesourcery.logreceiver.MessageDAO">
+    <bean name="messageDAO" class="de.codesourcery.logreceiver.logstorage.MessageDAO">
         <constructor-arg ref="datasource"/>
     </bean>
 

@@ -1,5 +1,12 @@
 package de.codesourcery.logreceiver;
 
+import de.codesourcery.logreceiver.entity.Configuration;
+import de.codesourcery.logreceiver.filtering.FilterCallbackHelper;
+import de.codesourcery.logreceiver.logstorage.MessageDAO;
+import de.codesourcery.logreceiver.parsing.ILogParser;
+import de.codesourcery.logreceiver.parsing.RFC5424Parser;
+import de.codesourcery.logreceiver.logstorage.SQLLogWriter;
+import de.codesourcery.logreceiver.storage.InMemoryHostIdManager;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,7 +40,7 @@ public class ParserTest
 
         final InMemoryHostIdManager hostIdManager = new InMemoryHostIdManager( new Configuration() );
         final SQLLogWriter writer = new SQLLogWriter(storage, hostIdManager );
-        final ILogParser p = new RFC5424Parser( hostIdManager , writer );
+        final ILogParser p = new RFC5424Parser( hostIdManager, writer );
 
         final InetAddress localhost = InetAddress.getLocalHost();
         for ( String s : lines )

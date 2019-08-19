@@ -1,22 +1,19 @@
 package de.codesourcery.logreceiver.formatting;
 
-import de.codesourcery.logreceiver.SyslogMessage;
+import de.codesourcery.logreceiver.entity.SyslogMessage;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PatternLogFormatter implements ILogFormatter
 {
-    public static enum Field {
-
-    }
-    private static final Transformer YEAR_FIELD = msg -> leftPad( Integer.toString( msg.getTimestamp().getYear() ), '0', 4 );
-    private static final Transformer MONTH_FIELD = msg -> leftPad( Integer.toString( msg.getTimestamp().getMonthValue() ), '0', 2 );
-    private static final Transformer DAY_FIELD = msg -> leftPad( Integer.toString( msg.getTimestamp().getDayOfMonth() ), '0', 2 );
-    private static final Transformer HOUR_FIELD = msg -> leftPad( Integer.toString( msg.getTimestamp().getHour() ), '0', 2 );
-    private static final Transformer MINUTE_FIELD = msg -> leftPad( Integer.toString( msg.getTimestamp().getMinute() ), '0', 2 );
-    private static final Transformer SECOND_FIELD = msg -> leftPad( Integer.toString( msg.getTimestamp().getSecond() ), '0', 2 );
-    private static final Transformer NANO_FIELD = msg -> Integer.toString( msg.getTimestamp().getNano() );
+    private static final Transformer YEAR_FIELD = msg -> leftPad( Integer.toString( msg.timestamp.getYear() ), '0', 4 );
+    private static final Transformer MONTH_FIELD = msg -> leftPad( Integer.toString( msg.timestamp.getMonthValue() ), '0', 2 );
+    private static final Transformer DAY_FIELD = msg -> leftPad( Integer.toString( msg.timestamp.getDayOfMonth() ), '0', 2 );
+    private static final Transformer HOUR_FIELD = msg -> leftPad( Integer.toString( msg.timestamp.getHour() ), '0', 2 );
+    private static final Transformer MINUTE_FIELD = msg -> leftPad( Integer.toString( msg.timestamp.getMinute() ), '0', 2 );
+    private static final Transformer SECOND_FIELD = msg -> leftPad( Integer.toString( msg.timestamp.getSecond() ), '0', 2 );
+    private static final Transformer NANO_FIELD = msg -> Integer.toString( msg.timestamp.getNano() );
     private static final Transformer MSG_FIELD = msg -> msg.message;
     private static final Transformer PRIORITY_FIELD = msg -> leftPad( Short.toString( msg.priority ), '0', 3 );
     private static final Transformer PROTO_HOSTNAME_FIELD = msg -> msg.hostName;
@@ -51,12 +48,67 @@ public class PatternLogFormatter implements ILogFormatter
             return null;
         }
     };
+
     private static final Transformer TIMEZONE_FIELD = msg ->
     {
-        if ( msg.tzHours < 0 ) {
-            return "-"+leftPad( Integer.toString(-1*msg.tzHours),'0',2)+leftPad( Integer.toString(-1*msg.tzMinutes),'0',2);
+        return msg.visitTZOffset( (tzHours,tzMinutes,posTZ) -> {
+            return (posTZ ? "+" : "-")+leftPad( Integer.toString(tzHours),'0',2)+
+                       leftPad( Integer.toString(tzMinutes),'0',2);
+        });
+    };
+
+    private static final String[] SEVERITY = {
+              "EMERGENCY",
+              "ALERT",
+              "CRITICAL",
+              "ERROR",
+              "WARN",
+              "NOTICE",
+              "INFO",
+              "DEBUG"
+    };
+
+    private static final String[] FACILITIES = {
+              "kernel messages",
+              "user-level messages",
+              "mail system",
+              "system daemons",
+              "security/authorization messages",
+              "messages generated internally by syslogd",
+              "line printer subsystem",
+              "network news subsystem",
+              "UUCP subsystem",
+              "clock daemon",
+             "security/authorization messages",
+             "FTP daemon",
+             "NTP subsystem",
+             "log audit",
+             "log alert",
+             "clock daemon",
+             "local0",
+             "local1",
+             "local2",
+             "local3",
+             "local4",
+             "local5",
+             "local6",
+             "local7"
+    };
+
+    private static final Transformer FACILITY_FIELD = msg -> {
+        final int v = msg.getFacility();
+        if ( v >=0 && v < FACILITIES.length ) {
+            return FACILITIES[v];
         }
-        return "+"+leftPad( Byte.toString(msg.tzHours),'0',2)+leftPad( Byte.toString(msg.tzMinutes),'0',2);
+        return Integer.toString(v);
+    };
+
+    private static final Transformer SEVERITY_FIELD = msg -> {
+        final int v = msg.getSeverity();
+        if ( v >=0 && v < SEVERITY.length ) {
+            return SEVERITY[v];
+        }
+        return Integer.toString(v);
     };
 
     public final String pattern;
@@ -97,6 +149,9 @@ public class PatternLogFormatter implements ILogFormatter
                 if ( next == '%')
                 {
                     quoted = true;
+                    if ( (end+2) == len ) {
+                       throw new IllegalArgumentException( "Illegal pattern at "+end );
+                    }
                     end++;
                     continue;
                 }
@@ -125,22 +180,24 @@ public class PatternLogFormatter implements ILogFormatter
     {
         switch( next )
         {
-            case 'Y': return YEAR_FIELD;
-            case 'm': return MONTH_FIELD;
+            case 'a': return APPNAME_FIELD;
+            case 'c': return PROCID_FIELD;
             case 'd': return DAY_FIELD;
+            case 'D': return DNS_NAME_FIELD;
+            case 'e': return SEVERITY_FIELD;
+            case 'f': return FACILITY_FIELD;
+            case 'h': return PROTO_HOSTNAME_FIELD;
             case 'H': return HOUR_FIELD;
+            case 'i': return IP_FIELD;
+            case 'I': return MSGID_FIELD;
+            case 'm': return MONTH_FIELD;
             case 'M': return MINUTE_FIELD;
+            case 'p': return PRIORITY_FIELD;
+            case 'P': return SD_PARAM_FIELD;
             case 's': return SECOND_FIELD;
             case 'S': return NANO_FIELD;
             case 't': return MSG_FIELD;
-            case 'p': return PRIORITY_FIELD;
-            case 'h': return PROTO_HOSTNAME_FIELD;
-            case 'P': return SD_PARAM_FIELD;
-            case 'a': return APPNAME_FIELD;
-            case 'i': return IP_FIELD;
-            case 'c': return PROCID_FIELD;
-            case 'I': return MSGID_FIELD;
-            case 'D': return DNS_NAME_FIELD;
+            case 'Y': return YEAR_FIELD;
             case 'Z': return TIMEZONE_FIELD;
         }
         return null;
