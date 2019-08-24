@@ -2,6 +2,7 @@ package de.codesourcery.logreceiver.logstorage;
 
 import de.codesourcery.logreceiver.entity.Configuration;
 import de.codesourcery.logreceiver.entity.Host;
+import de.codesourcery.logreceiver.parsing.JDBCHelper;
 import de.codesourcery.logreceiver.storage.InMemoryHostIdManager;
 
 import javax.sql.DataSource;
@@ -13,13 +14,39 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PostgreSQLHostIdManager extends InMemoryHostIdManager
 {
     private static final org.apache.logging.log4j.Logger LOG = org.apache.logging.log4j.LogManager.getLogger( PostgreSQLHostIdManager.class.getName() );
 
-    private static final String HOSTS_TABLE = "log_hosts";
+    public static final String HOSTS_TABLE = "log_hosts";
     private static final String PROJECTION_COLUMNS = "host_id,ip,name,data_retention_hours";
+
+    public static final JDBCHelper.ResultSetConsumer<List<Host>> MAPPER = rs -> {
+        List<Host> result = new ArrayList<>();
+        while ( rs.next() ) {
+            final Host h = new Host();
+            h.id = rs.getLong("host_id");
+            h.hostName = rs.getString("name");
+            h.dataRetentionTime = Duration.ofHours(  rs.getInt( "data_retention_hours") );
+            final String ip = rs.getString("ip");
+            try
+            {
+                // TODO: Potential for speeding things up as we know the string is definitely not a hostname
+                h.ip = InetAddress.getByName(ip);
+            }
+            catch (UnknownHostException e)
+            {
+                // should never happen as we're parsing a literal IP
+                throw new RuntimeException(e);
+            }
+
+            result.add(h);
+        }
+        return result;
+    };
 
     private final DataSource ds;
 
