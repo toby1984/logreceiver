@@ -11,6 +11,9 @@
   <listener>
     <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
   </listener>
+  <listener>
+    <listener-class>de.codesourcery.logreceiver.ui.auth.SessionListener</listener-class>
+  </listener>
 
   <filter>
     <filter-name>wicket</filter-name>

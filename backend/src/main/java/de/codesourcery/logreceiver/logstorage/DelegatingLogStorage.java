@@ -8,6 +8,7 @@ import de.codesourcery.logreceiver.util.Interval;
 import de.codesourcery.logreceiver.parsing.JDBCHelper;
 import de.codesourcery.logreceiver.storage.IHostManager;
 import de.codesourcery.logreceiver.util.EternalThread;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.annotation.PreDestroy;
 import javax.sql.DataSource;
@@ -80,7 +81,7 @@ public class DelegatingLogStorage implements ISQLLogStorage
 
         LOG.debug("cleanUp(): Invoked for host "+host+", retention time: "+host.dataRetentionTime);
 
-        final JDBCHelper helper = new JDBCHelper( this.dataSource );
+        final JDBCHelper helper = new JDBCHelper( new JdbcTemplate(this.dataSource) );
         final ZonedDateTime now = ZonedDateTime.now();
         final ZonedDateTime earliestDate = now.minus( host.dataRetentionTime );
         for ( String partTableName : findPartitions( host, helper ) )

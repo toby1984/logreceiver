@@ -1,7 +1,10 @@
 package de.codesourcery.logreceiver.ui;
 
+import de.codesourcery.logreceiver.ui.auth.LoginRequired;
+
 import java.time.format.DateTimeFormatter;
 
+@LoginRequired
 public class HomePage extends BasePage
 {
     private static final org.apache.logging.log4j.Logger LOG = org.apache.logging.log4j.LogManager.getLogger( HomePage.class );

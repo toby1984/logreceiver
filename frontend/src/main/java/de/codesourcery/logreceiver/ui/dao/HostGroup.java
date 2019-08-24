@@ -1,4 +1,4 @@
-package de.codesourcery.logreceiver.ui.auth;
+package de.codesourcery.logreceiver.ui.dao;
 
 import de.codesourcery.logreceiver.entity.Host;
 

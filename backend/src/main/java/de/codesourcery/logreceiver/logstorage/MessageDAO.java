@@ -6,8 +6,8 @@ import de.codesourcery.logreceiver.entity.SyslogMessage;
 import de.codesourcery.logreceiver.filtering.IFilterCallback;
 import de.codesourcery.logreceiver.parsing.JDBCHelper;
 import de.codesourcery.logreceiver.util.DateUtils;
+import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.ZonedDateTime;
@@ -26,14 +26,7 @@ public class MessageDAO
     public Long getLatestMessageId(Host host)
     {
         final String sql = "SELECT max(entry_id) AS entry_id FROM "+PartitionNamePattern.parentTableName( host );
-        final JDBCHelper.ResultSetConsumer<Long> c = rs ->
-        {
-            if ( rs.next() ) {
-                return rs.getLong( 1 );
-            }
-            return null;
-        };
-        return helper.execQuery( sql, c);
+        return helper.queryForLong( sql );
     }
 
     @FunctionalInterface
@@ -125,9 +118,9 @@ public class MessageDAO
         }
     };
 
-    public MessageDAO(DataSource datasource)
+    public MessageDAO(JdbcTemplate template)
     {
-        helper = new JDBCHelper(datasource);
+        helper = new JDBCHelper(template);
     }
 
     public List<SyslogMessage> getLatestMessages(Host host, IFilterCallback callback, int maxCount)
@@ -142,7 +135,7 @@ public class MessageDAO
     /**
      * Visit all messages for a given host that have a DB primary key greater than X.
      *
-     * Messages are visited oldest to newest.
+     * Messages are visi+ted oldest to newest.
      *
      * @param host
      * @param filters
@@ -158,7 +151,7 @@ public class MessageDAO
         } else {
             sql = "SELECT * FROM " + PartitionNamePattern.parentTableName( host ) + " WHERE entry_id > "+latestId+" ORDER BY entry_id ASC";
         }
-        final JDBCHelper.ResultSetConsumer<Long> c = rs ->
+        final org.springframework.jdbc.core.ResultSetExtractor<Long> c = rs ->
         {
             Long lastId = null;
             final List<SyslogMessage> batch = new ArrayList<>();

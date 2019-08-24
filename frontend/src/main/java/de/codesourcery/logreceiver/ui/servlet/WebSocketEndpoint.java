@@ -11,6 +11,7 @@ import de.codesourcery.logreceiver.entity.Host;
 import de.codesourcery.logreceiver.entity.SyslogMessage;
 import de.codesourcery.logreceiver.filtering.IFilterCallback;
 import de.codesourcery.logreceiver.formatting.PatternLogFormatter;
+import de.codesourcery.logreceiver.ui.auth.IAuthenticator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.web.context.WebApplicationContext;
@@ -33,7 +34,6 @@ import javax.websocket.server.HandshakeRequest;
 import javax.websocket.server.ServerEndpoint;
 import javax.websocket.server.ServerEndpointConfig;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -81,9 +81,16 @@ public class WebSocketEndpoint {
         {
             try
             {
-                HttpSession httpSession = (HttpSession) request.getHttpSession();
+                final HttpSession httpSession = (HttpSession) request.getHttpSession();
                 final ServletContext ctx = httpSession.getServletContext();
                 config.getUserProperties().put( SERVLET_CTX_PROPERTY, ctx );
+
+                final WebApplicationContext springCtx = WebApplicationContextUtils.getWebApplicationContext( ctx );
+                final IAuthenticator authenticator = springCtx.getBean( IAuthenticator.class );
+                if ( authenticator.getUserForSession( httpSession.getId() ).isEmpty() ) {
+                    LOG.error("modifyHandshake(): Received unauthorized request for HTTP session "+httpSession.getId() );
+                    throw new RuntimeException("Not authorized");
+                }
             } catch(RuntimeException e) {
                 throw e;
             }

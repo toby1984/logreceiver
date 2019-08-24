@@ -1,4 +1,4 @@
-package de.codesourcery.logreceiver.ui.auth;
+package de.codesourcery.logreceiver.ui.dao;
 
 public class User
 {

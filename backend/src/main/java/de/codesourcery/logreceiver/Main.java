@@ -11,6 +11,7 @@ import de.codesourcery.logreceiver.parsing.LogParserFactory;
 import de.codesourcery.logreceiver.receiving.UDPServer;
 import de.codesourcery.logreceiver.storage.IHostManager;
 import de.codesourcery.logreceiver.util.DataSourceFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 
@@ -33,7 +34,7 @@ public class Main
     public static void setup(Configuration config) throws Exception
     {
         ds = new DataSourceFactory( config ).getObject();
-        messageDAO = new MessageDAO( ds );
+        messageDAO = new MessageDAO( new JdbcTemplate(ds) );
         hostIdManager = new PostgreSQLHostIdManager( ds, config );
 
         final FilterCallbackHelper callbackHelper = new FilterCallbackHelper( hostIdManager, messageDAO );

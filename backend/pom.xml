@@ -9,16 +9,17 @@
   <artifactId>logreceiver-backend</artifactId>
   <dependencies>
     <dependency>
+      <groupId>de.codesourcery.logreceiver</groupId>
+      <artifactId>maven-library-spring</artifactId>
+      <type>pom</type>
+    </dependency>
+    <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.tomcat</groupId>
       <artifactId>tomcat-jdbc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-context</artifactId>
     </dependency>
     <dependency>
       <groupId>javax.annotation</groupId>
