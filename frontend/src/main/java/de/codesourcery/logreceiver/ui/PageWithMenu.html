@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org/">
+<wicket:head>
+  <style>
+    #mainBody {
+      margin-top:25px;
+    }
+  </style>
+</wicket:head>
+<body>
+<wicket:extend>
+  <wicket:fragment wicket:id="menuItem">
+    <div>
+      <a href="#" wicket:id="link"><wicket:container wicket:id="label"/></a>
+    </div>
+  </wicket:fragment>
+  <div>
+    <div wicket:id="menuItems">
+      <div wicket:id="item"/>
+    </div>
+  </div>
+  <div id="mainBody">
+    <wicket:child/>
+  </div>
+</wicket:extend>
+</body>
+</html>

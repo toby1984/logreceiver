@@ -2,7 +2,7 @@ package de.codesourcery.logreceiver.logstorage;
 
 import de.codesourcery.logreceiver.entity.Configuration;
 import de.codesourcery.logreceiver.entity.Host;
-import de.codesourcery.logreceiver.filtering.FilterCallbackHelper;
+import de.codesourcery.logreceiver.filtering.FilterCallbackManager;
 import de.codesourcery.logreceiver.util.Interval;
 import de.codesourcery.logreceiver.util.EternalThread;
 import org.postgresql.copy.CopyManager;
@@ -18,7 +18,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Set;
 
 public class PostgreSQLStorage implements ISQLLogStorage
 {
@@ -28,7 +27,7 @@ public class PostgreSQLStorage implements ISQLLogStorage
     // Columns for COPY statement
     private static final String COPY_COLUMNS = "priority,log_ts,log_ts_fraction,host_id,app_name,proc_id,msg_id,params,msg";
 
-    private final FilterCallbackHelper callbackHelper;
+    private final FilterCallbackManager callbackHelper;
 
     private final EternalThread watchdog;
 
@@ -48,7 +47,7 @@ public class PostgreSQLStorage implements ISQLLogStorage
                              DataSource datasource,
                              String partition,
                              Interval interval,
-                             Configuration config, FilterCallbackHelper callbackHelper) throws SQLException
+                             Configuration config, FilterCallbackManager callbackHelper) throws SQLException
     {
         this.host = host;
         this.callbackHelper = callbackHelper;

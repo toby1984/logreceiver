@@ -2,7 +2,7 @@ package de.codesourcery.logreceiver.logstorage;
 
 import de.codesourcery.logreceiver.entity.Configuration;
 import de.codesourcery.logreceiver.entity.Host;
-import de.codesourcery.logreceiver.filtering.FilterCallbackHelper;
+import de.codesourcery.logreceiver.filtering.FilterCallbackManager;
 import de.codesourcery.logreceiver.util.DateUtils;
 import de.codesourcery.logreceiver.util.Interval;
 import de.codesourcery.logreceiver.parsing.JDBCHelper;
@@ -40,7 +40,7 @@ public class DelegatingLogStorage implements ISQLLogStorage
     private final DataSource dataSource;
     private final IHostManager hostManager;
     private final Configuration config;
-    private final FilterCallbackHelper callbackHelper;
+    private final FilterCallbackManager callbackHelper;
 
     private volatile long lastBackendPurge=0;
     private final AtomicBoolean purgeBackends = new AtomicBoolean();
@@ -145,7 +145,7 @@ public class DelegatingLogStorage implements ISQLLogStorage
         }, oid );
     }
 
-    public DelegatingLogStorage(DataSource dataSource, IHostManager hostManager, Configuration config, FilterCallbackHelper callbackHelper)
+    public DelegatingLogStorage(DataSource dataSource, IHostManager hostManager, Configuration config, FilterCallbackManager callbackHelper)
     {
         this.dataSource = dataSource;
         this.hostManager = hostManager;

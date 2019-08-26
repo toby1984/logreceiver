@@ -23,9 +23,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class FilterCallbackHelper
+public class FilterCallbackManager
 {
-    private static final Logger LOG = LogManager.getLogger( FilterCallbackHelper.class );
+    private static final Logger LOG = LogManager.getLogger( FilterCallbackManager.class );
 
     private final Map<InetAddress, ConcurrentLinkedQueue<IFilterCallback>> filterCallbacks = new ConcurrentHashMap<>();
 
@@ -144,7 +144,7 @@ public class FilterCallbackHelper
         }
     }
 
-    public FilterCallbackHelper(IHostManager hostManager, MessageDAO dao)
+    public FilterCallbackManager(IHostManager hostManager, MessageDAO dao)
     {
         this.hostManager = hostManager;
         this.dao = dao;

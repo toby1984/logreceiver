@@ -2,7 +2,7 @@ package de.codesourcery.logreceiver;
 
 import de.codesourcery.logreceiver.entity.Host;
 import de.codesourcery.logreceiver.entity.SyslogMessage;
-import de.codesourcery.logreceiver.filtering.FilterCallbackHelper;
+import de.codesourcery.logreceiver.filtering.FilterCallbackManager;
 import de.codesourcery.logreceiver.filtering.IFilterCallback;
 import de.codesourcery.logreceiver.logstorage.MessageDAO;
 import de.codesourcery.logreceiver.storage.IHostManager;
@@ -13,9 +13,9 @@ public class APIImpl implements IAPI
 {
     private final IHostManager hostManager;
     private final MessageDAO dao;
-    private FilterCallbackHelper callbackHelper;
+    private FilterCallbackManager callbackHelper;
 
-    public APIImpl(IHostManager hostManager, MessageDAO dao,FilterCallbackHelper callbackHelper) {
+    public APIImpl(IHostManager hostManager, MessageDAO dao, FilterCallbackManager callbackHelper) {
 
         this.hostManager = hostManager;
         this.dao = dao;

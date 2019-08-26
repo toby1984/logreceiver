@@ -1,6 +1,5 @@
 package de.codesourcery.logreceiver.parsing;
 
-import de.codesourcery.logreceiver.filtering.FilterCallbackHelper;
 import de.codesourcery.logreceiver.logstorage.ILogStorage;
 import de.codesourcery.logreceiver.storage.IHostManager;
 

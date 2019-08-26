@@ -1,7 +1,7 @@
 package de.codesourcery.logreceiver;
 
 import de.codesourcery.logreceiver.entity.Configuration;
-import de.codesourcery.logreceiver.filtering.FilterCallbackHelper;
+import de.codesourcery.logreceiver.filtering.FilterCallbackManager;
 import de.codesourcery.logreceiver.logstorage.DelegatingLogStorage;
 import de.codesourcery.logreceiver.logstorage.ISQLLogStorage;
 import de.codesourcery.logreceiver.logstorage.MessageDAO;
@@ -37,7 +37,7 @@ public class Main
         messageDAO = new MessageDAO( new JdbcTemplate(ds) );
         hostIdManager = new PostgreSQLHostIdManager( ds, config );
 
-        final FilterCallbackHelper callbackHelper = new FilterCallbackHelper( hostIdManager, messageDAO );
+        final FilterCallbackManager callbackHelper = new FilterCallbackManager( hostIdManager, messageDAO );
         callbackHelper.afterPropertiesSet();
 
         storage = new DelegatingLogStorage( ds , hostIdManager, config, callbackHelper );

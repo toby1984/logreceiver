@@ -12,6 +12,7 @@ import de.codesourcery.logreceiver.entity.SyslogMessage;
 import de.codesourcery.logreceiver.filtering.IFilterCallback;
 import de.codesourcery.logreceiver.formatting.PatternLogFormatter;
 import de.codesourcery.logreceiver.ui.auth.IAuthenticator;
+import de.codesourcery.logreceiver.ui.auth.SessionListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.web.context.WebApplicationContext;
@@ -86,8 +87,7 @@ public class WebSocketEndpoint {
                 config.getUserProperties().put( SERVLET_CTX_PROPERTY, ctx );
 
                 final WebApplicationContext springCtx = WebApplicationContextUtils.getWebApplicationContext( ctx );
-                final IAuthenticator authenticator = springCtx.getBean( IAuthenticator.class );
-                if ( authenticator.getUserForSession( httpSession.getId() ).isEmpty() ) {
+                if ( SessionListener.get().getUser(httpSession.getId() ) == null ) {
                     LOG.error("modifyHandshake(): Received unauthorized request for HTTP session "+httpSession.getId() );
                     throw new RuntimeException("Not authorized");
                 }

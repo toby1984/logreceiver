@@ -1,8 +1,6 @@
 package de.codesourcery.logreceiver;
 
 import de.codesourcery.logreceiver.entity.Configuration;
-import de.codesourcery.logreceiver.filtering.FilterCallbackHelper;
-import de.codesourcery.logreceiver.logstorage.MessageDAO;
 import de.codesourcery.logreceiver.parsing.ILogParser;
 import de.codesourcery.logreceiver.parsing.RFC5424Parser;
 import de.codesourcery.logreceiver.logstorage.SQLLogWriter;
