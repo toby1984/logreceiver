@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org/">
+<wicket:head>
+  <style>
+    .center {
+      margin:auto;
+      width:50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height:100%;
+    }
+    .center input {
+      width:150px;
+    }
+    #loginForm {
+      height:250px;
+      width:300px;
+    }
+  </style>
+</wicket:head>
+<body>
+<wicket:extend>
+  <div class="center">
+    <div>
+      <form id="userForm" wicket:id="userForm">
+        <table>
+          <tr>
+            <td><label for="login">Login:</label></td>
+            <td><input id="login" type="text" autofocus="autofocus" wicket:id="login" size="20"></input></td>
+          </tr>
+          <tr>
+            <td><label for="email">email:</label></td>
+            <td><input id="email" type="text" wicket:id="email" size="20"></input></td>
+          </tr>
+          <tr>
+            <td><label for="password">Password:</label></td>
+            <td><input id="password" type="password" wicket:id="password" size="20"></input></td>
+          </tr>
+          <tr>
+            <td><label for="passwordRepeat">Password (repeat):</label></td>
+            <td><input id="passwordRepeat" type="password" wicket:id="passwordRepeat" size="20"></input></td>
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+            <td><input type="submit" value="Register" /><div wicket:id="feedback"/></td>
+          </tr>
+        </table>
+      </form>
+    </div>
+  </div>
+</wicket:extend>
+</body>
+</html>

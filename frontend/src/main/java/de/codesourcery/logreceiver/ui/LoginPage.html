@@ -3,25 +3,49 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org/">
 <wicket:head>
     <style>
+        .center {
+            margin:auto;
+            width:50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height:100%;
+        }
+        .center input {
+            width:150px;
+        }
+        #loginForm {
+            height:250px;
+            width:300px;
+        }
     </style>
 </wicket:head>
 <body>
 <wicket:extend>
-    <form wicket:id="loginForm">
+    <div class="center">
         <div>
-            <label>Login:
-                <input type="text" wicket:id="login" size="20"></input>
-            </label>
+        <form id="loginForm" wicket:id="loginForm">
+            <table>
+                <tr>
+                    <td><label for="login">Login:</label></td>
+                    <td><input id="login" type="text" autofocus="autofocus" wicket:id="login" size="20"></input></td>
+                </tr>
+                <tr>
+                    <td><label for="password">Password:</label></td>
+                    <td><input id="password" type="password" wicket:id="password" size="20"></input></td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td><input type="submit" value="Submit" /><div wicket:id="feedback"/></td>
+                </tr>
+              <tr>
+                <td> </td>
+                <td>No account? <a href="#" wicket:id="registrationLink">Register</a></td>
+              </tr>
+            </table>
+        </form>
         </div>
-        <div>
-            <label>Password:
-                <input type="password" wicket:id="password" size="20"></input>
-            </label>
-        </div>
-        <div>
-            <input type="submit" value="Submit" /><div wicket:id="feedback"/>
-        </div>
-    </form>
+    </div>
 </wicket:extend>
 </body>
 </html>

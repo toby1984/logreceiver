@@ -7,13 +7,14 @@ import java.io.ByteArrayOutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Random;
 
 public class HashUtils
 {
     private static final String HEX = "0123456789abcdef";
     private static final char[] HEX_CHARS = HEX.toCharArray();
 
-    private static final ThreadLocal<SecureRandom> random = ThreadLocal.withInitial( SecureRandom::new );
+    private static final ThreadLocal<SecureRandom> RANDOM = ThreadLocal.withInitial( SecureRandom::new );
 
     private static final int iterations = 1000;
     private static final int keyLength = 512;
@@ -53,7 +54,7 @@ public class HashUtils
 
     public static String hashPassword(String password) {
         final byte[] saltBytes = new byte[8];
-        random.get().nextBytes( saltBytes );
+        RANDOM.get().nextBytes( saltBytes );
         return hashPassword( password, saltBytes );
     }
 
@@ -77,5 +78,14 @@ public class HashUtils
         final PBEKeySpec spec = new PBEKeySpec( password, salt, iterations, keyLength );
         final SecretKey key = skf.generateSecret( spec );
         return key.getEncoded();
+    }
+
+    public static String generateActivationCode()
+    {
+        final byte[] data = new byte[16];
+        // TODO: SecureRandom will probably run out of entropy
+        // TODO: if on a VM or this method gets called a lot
+        RANDOM.get().nextBytes(data);
+        return hex(data);
     }
 }

@@ -25,6 +25,7 @@ public class WicketApplication extends WebApplication
     {
         super.init();
         mountPage("/home",HomePage.class);
+        mountPage("/activate",ActivateUserPage.class);
         getComponentInstantiationListeners().add(new SpringComponentInjector(this) );
         getComponentInstantiationListeners().add( component ->
         {
@@ -37,7 +38,7 @@ public class WicketApplication extends WebApplication
                     throw new RestartResponseException( LoginPage.class );
                 }
             }
-        } );
+        });
 
         getDebugSettings().setDevelopmentUtilitiesEnabled( true );
         getResourceSettings().setResourcePollFrequency( Duration.seconds( 1 ) );

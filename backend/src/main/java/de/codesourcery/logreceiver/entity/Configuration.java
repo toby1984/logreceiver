@@ -29,4 +29,11 @@ public class Configuration
 
     // UI
     public String defaultLogDisplayPattern="%Y-%m-%d %H:%M:%s.%S%Z %D(%i) - %e - %t";
+
+    // user management
+    public boolean strictPasswordPolicy=false;
+
+    // email properties
+    public String emailServer = "localhost";
+    public String emailSender = "root@localhost";
 }

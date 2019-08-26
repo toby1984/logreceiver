@@ -6,4 +6,6 @@ public class User
     public String loginName;
     public String email;
     public String passwordHash;
+    public String activationCode;
+    public boolean activated;
 }

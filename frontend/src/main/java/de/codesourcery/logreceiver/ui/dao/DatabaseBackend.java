@@ -83,6 +83,8 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
         user.email = rs.getString("email");
         user.loginName = rs.getString("login");
         user.passwordHash = rs.getString("password");
+        user.activated = rs.getBoolean("activated");
+        user.activationCode = rs.getString("activation_code");
         return user;
     };
 
@@ -194,7 +196,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
     {
         if ( user.id == 0 ) {
             // new instance
-            final String sql = "INSERT INTO "+ USER_TABLE +" (login,email,password) VALUES (?,?,?)";
+            final String sql = "INSERT INTO "+ USER_TABLE +" (login,email,password,activated,activation_code) VALUES (?,?,?,?,?)";
             final GeneratedKeyHolder holder = new GeneratedKeyHolder();
             jdbcTemplate.update(con ->
             {
@@ -202,13 +204,15 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                 stmt.setString(1,user.loginName);
                 stmt.setString(2,user.email);
                 stmt.setString(3,user.passwordHash);
+                stmt.setBoolean(4,user.activated);
+                stmt.setString(5,user.activationCode);
                 return stmt;
             },holder);
             user.id = ((Number) holder.getKeys().get("user_id")).longValue();
         } else {
             // update existing instance
-            final String sql = "UPDATE "+ USER_TABLE +" SET login=?,email=?,password=? WHERE user_id=?";
-            jdbcTemplate.update( sql, user.loginName, user.email, user.passwordHash, user.id );
+            final String sql = "UPDATE "+ USER_TABLE +" SET login=?,email=?,password=?,activated=?,activation_code=? WHERE user_id=?";
+            jdbcTemplate.update( sql, user.loginName, user.email, user.passwordHash, user.activated, user.activationCode, user.id );
         }
     }
 
@@ -386,6 +390,8 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                "                user_id bigint PRIMARY KEY DEFAULT nextval('user_seq'),\n" +
                                "                login text NOT NULL,\n" +
                                "                email text NOT NULL,\n" +
+                               "                activation_code text DEFAULT NULL,\n" +
+                               "                activated boolean NOT NULL DEFAULT false,\n" +
                                "                password text NOT NULL)",
                                "        CREATE UNIQUE INDEX IF NOT EXISTS idx_user_login ON users(lower(login))",
                                "        CREATE UNIQUE INDEX IF NOT EXISTS idx_user_email ON users(lower(email))",
@@ -424,6 +430,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             admin.email="root@localhost";
             admin.loginName="admin";
             admin.passwordHash= HashUtils.hashPassword("admin");
+            admin.activated = true;
             saveUser( admin );
         }
     }

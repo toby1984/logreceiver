@@ -24,7 +24,7 @@ public class SimpleAuthenticator implements IAuthenticator
     private IDatabaseBackend dao;
 
     @Override
-    public Optional<User> authenticate(String login, String password,String httpSessionId)
+    public User authenticate(String login, String password,String httpSessionId)
     {
         Validate.notNull(login, "login must not be null");
         Validate.notNull(password, "password must not be null");
@@ -32,19 +32,24 @@ public class SimpleAuthenticator implements IAuthenticator
         LOG.info("authenticate(): User '"+login+"' tries to login");
         final Optional<User> user = dao.getUserByLogin( login );
         if ( user.isEmpty() ) {
-            LOG.warn("authenticate(): User '"+login+"' does not exist");
-            return Optional.empty();
+            LOG.info("authenticate(): User '"+login+"' does not exist");
+            throw new RuntimeException("Authentication failed, bad login or credentials");
+        }
+        if ( ! user.get().activated ) {
+            LOG.info("authenticate(): User '"+login+"' is not activated yet");
+            throw new RuntimeException("Account is not activated yet, please check your e-mail.");
         }
         SessionListener.get().remove( user.get() );
 
         if ( HashUtils.comparePasswords( password, user.get().passwordHash ) ) {
             LOG.info("authenticate(): User '"+login+"' ("+user.get().id+") logged in.");
             SessionListener.get().put(httpSessionId,user.get());
-            return user;
+            return user.get();
         }
+
         // TODO: Lock account after X failed attempts
         LOG.warn("authenticate(): User '"+login+"' ("+user.get().id+") provided the wrong password");
-        return Optional.empty();
+        throw new RuntimeException("Authentication failed, bad login or credentials");
     }
 
     @Resource

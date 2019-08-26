@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org/">
+<wicket:head>
+  <style>
+    .center {
+      margin:auto;
+      width:50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height:100%;
+    }
+    .center input {
+      width:150px;
+    }
+    #loginForm {
+      height:250px;
+      width:300px;
+    }
+  </style>
+</wicket:head>
+<body>
+<wicket:extend>
+  <div wicket:id="message"></div>
+  <form wicket:id="dummyForm">
+    <button wicket:id="backLink">Back</button>
+  </form>
+</wicket:extend>
+</body>
+</html>

@@ -6,5 +6,5 @@ import java.util.Optional;
 
 public interface IAuthenticator
 {
-    Optional<User> authenticate(String login, String password, String httpSessionId);
+    User authenticate(String login, String password, String httpSessionId);
 }
