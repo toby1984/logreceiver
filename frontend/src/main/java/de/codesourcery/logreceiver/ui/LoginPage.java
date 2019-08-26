@@ -40,7 +40,7 @@ public class LoginPage extends BasePage
         final PasswordTextField password =
                 new PasswordTextField("password", Model.of("") );
 
-        final Form<Void> form = new Form<Void>("loginForm") {
+        final Form<Void> form = new Form<>("loginForm") {
             @Override
             protected void onSubmit()
             {
@@ -48,11 +48,15 @@ public class LoginPage extends BasePage
                 {
                     final Optional<User> user = authenticator.authenticate( login.getModelObject(), password.getModelObject(),
                             getSession().getId() );
-                    if ( user.isPresent() )
+                    if (user.isEmpty())
                     {
+                        error("Authentication failed");
+                    }
+                    else
+                    {
+                        LoginPage.this.getSession().setUser(user.get());
                         setResponsePage( HomePage.class );
                     }
-                    error( "Authentication failed" );
                 }
                 catch(Exception e) {
                     LOG.error("onSubmit(): Internal error",e);

@@ -2,11 +2,13 @@ package de.codesourcery.logreceiver.ui.auth;
 
 import de.codesourcery.logreceiver.ui.dao.IDatabaseBackend;
 import de.codesourcery.logreceiver.ui.dao.User;
+import jdk.jshell.spi.ExecutionControl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpSession;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,8 +20,7 @@ public class SimpleAuthenticator implements IAuthenticator
 
     private IDatabaseBackend dao;
 
-    private final Map<String, User> userBySessionID =
-            new ConcurrentHashMap<>();
+    private final Map<String, User> userBySessionID = new ConcurrentHashMap<>();
 
     @Override
     public Optional<User> authenticate(String login, String password,String httpSessionId)
@@ -47,6 +48,13 @@ public class SimpleAuthenticator implements IAuthenticator
     {
         final User user = userBySessionID.get( sessionId );
         return Optional.ofNullable( user );
+    }
+
+    @Override
+    public void logout(String sessionId)
+    {
+        final Optional<HttpSession> session = SessionListener.get().getSession(sessionId);
+        session.ifPresent(HttpSession::invalidate);
     }
 
     @Resource

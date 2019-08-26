@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAware
@@ -113,11 +114,11 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
 
             // key is host_group_id, value is all host IDs of this group
             final Map<Long, Set<Long>> hostsByGroupId = jdbcTemplate.query(
-                    "SELECT * FROM " + HOSTS_TO_HOSTGROUPS_TABLE + " WHERE host_group_id IN (" + ids + ")", joinTable );
+                "SELECT * FROM " + HOSTS_TO_HOSTGROUPS_TABLE + " WHERE host_group_id IN (" + ids + ")", joinTable );
 
             // now load all hosts for these host IDs
             final Set<Long> uniqueHostIds =
-                    hostsByGroupId.values().stream().flatMap( Collection::stream ).collect( Collectors.toSet() );
+                hostsByGroupId.values().stream().flatMap( Collection::stream ).collect( Collectors.toSet() );
             final Map<Long,Host> hostsById = getHostsById( uniqueHostIds );
 
             for (Map.Entry<Long, Set<Long>> entry : hostsByGroupId.entrySet() )
@@ -176,7 +177,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
     public Optional<User> getUserByLogin(String login)
     {
         return JDBCHelper.uniqueResult(
-                jdbcTemplate.query( "SELECT * FROM " + USER_TABLE + " WHERE login=?", USER_MAPPER, login ) );
+            jdbcTemplate.query( "SELECT * FROM " + USER_TABLE + " WHERE login=?", USER_MAPPER, login ) );
     }
 
     @Transactional
@@ -195,8 +196,15 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             // new instance
             final String sql = "INSERT INTO "+ USER_TABLE +" (login,email,password) VALUES (?,?,?)";
             final GeneratedKeyHolder holder = new GeneratedKeyHolder();
-            jdbcTemplate.update(con -> con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS),holder);
-            user.id = holder.getKey().longValue();
+            jdbcTemplate.update(con ->
+            {
+                final PreparedStatement stmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                stmt.setString(1,user.loginName);
+                stmt.setString(2,user.email);
+                stmt.setString(3,user.passwordHash);
+                return stmt;
+            },holder);
+            user.id = ((Number) holder.getKeys().get("user_id")).longValue();
         } else {
             // update existing instance
             final String sql = "UPDATE "+ USER_TABLE +" SET login=?,email=?,password=? WHERE user_id=?";
@@ -331,38 +339,38 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             final GeneratedKeyHolder holder = new GeneratedKeyHolder();
             final PreparedStatementCreator psc = con ->
             {
-              final String sql = "INSERT INTO "+SUBSCRIPTIONS_TABLE+" (" +
-                      "user_id," +
-                      "host_id," +
-                      "expression," +
-                      "send_as_batch," +
-                      "batch_duration_minutes) VALUES (?,?,?,?,?)";
-              final PreparedStatement stmt = con.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
-              stmt.setLong( 1, sub.user.id );
-              stmt.setLong( 2, sub.host.id );
-              stmt.setString( 3, sub.expression);
-              stmt.setBoolean( 4, sub.sendAsBatch);
-              if ( sub.batchDuration == null ) {
-                  stmt.setNull( 5, Types.INTEGER );
-              }
-              else
-              {
-                  stmt.setObject( 5, sub.batchDuration.toMinutes() );
-              }
-              return stmt;
+                final String sql = "INSERT INTO "+SUBSCRIPTIONS_TABLE+" (" +
+                                       "user_id," +
+                                       "host_id," +
+                                       "expression," +
+                                       "send_as_batch," +
+                                       "batch_duration_minutes) VALUES (?,?,?,?,?)";
+                final PreparedStatement stmt = con.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
+                stmt.setLong( 1, sub.user.id );
+                stmt.setLong( 2, sub.host.id );
+                stmt.setString( 3, sub.expression);
+                stmt.setBoolean( 4, sub.sendAsBatch);
+                if ( sub.batchDuration == null ) {
+                    stmt.setNull( 5, Types.INTEGER );
+                }
+                else
+                {
+                    stmt.setObject( 5, sub.batchDuration.toMinutes() );
+                }
+                return stmt;
             };
             jdbcTemplate.update(psc, holder );
             sub.id = holder.getKey().longValue();
         } else {
             jdbcTemplate.update("UPDATE "+SUBSCRIPTIONS_TABLE+" SET user_id=?," +
-                    "host_id=?,expression=?,send_as_batch=?,batch_duration_minutes=? WHERE" +
-                    " subscription_id=?",
-                    sub.user.id,
-                    sub.host.id,
-                    sub.expression,
-                    sub.sendAsBatch,
-                    sub.batchDuration == null ? null : sub.batchDuration.toMinutes(),
-                    sub.id);
+                                    "host_id=?,expression=?,send_as_batch=?,batch_duration_minutes=? WHERE" +
+                                    " subscription_id=?",
+                sub.user.id,
+                sub.host.id,
+                sub.expression,
+                sub.sendAsBatch,
+                sub.batchDuration == null ? null : sub.batchDuration.toMinutes(),
+                sub.id);
         }
     }
 
@@ -373,79 +381,51 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
     public void createTables()
     {
         // users
-        String sql = "CREATE SEQUENCE IF NOT EXISTS user_seq";
-        jdbcTemplate.update( sql );
+        final String[] sql = { "        CREATE SEQUENCE IF NOT EXISTS user_seq",
+                               "        CREATE TABLE IF NOT EXISTS users (\n" +
+                               "                user_id bigint PRIMARY KEY DEFAULT nextval('user_seq'),\n" +
+                               "                login text NOT NULL,\n" +
+                               "                email text NOT NULL,\n" +
+                               "                password text NOT NULL)",
+                               "        CREATE UNIQUE INDEX IF NOT EXISTS idx_user_login ON users(lower(login))",
+                               "        CREATE UNIQUE INDEX IF NOT EXISTS idx_user_email ON users(lower(email))",
+                               "        CREATE SEQUENCE IF NOT EXISTS host_group_seq",
+                               "        CREATE TABLE IF NOT EXISTS host_groups (\n" +
+                               "                host_group_id bigint PRIMARY KEY DEFAULT nextval('host_group_seq'),\n" +
+                               "                name text NOT NULL)",
+                               "        CREATE UNIQUE INDEX IF NOT EXISTS idx_host_group_name ON host_groups(lower(name))",
+                               "        CREATE TABLE IF NOT EXISTS users_to_host_groups (\n" +
+                               "                host_group_id bigint NOT NULL,\n" +
+                               "                user_id bigint NOT NULL,\n" +
+                               "                FOREIGN KEY (host_group_id) REFERENCES host_groups(host_group_id) ON DELETE CASCADE,\n" +
+                               "                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE)",
+                               "        CREATE UNIQUE INDEX IF NOT EXISTS idx_host_group ON users_to_host_groups(host_group_id,user_id)",
+                               "        CREATE TABLE IF NOT EXISTS hosts_to_host_groups (\n" +
+                               "                host_group_id bigint NOT NULL,\n" +
+                               "                host_id bigint NOT NULL,\n" +
+                               "                FOREIGN KEY (host_group_id) REFERENCES host_groups(host_group_id) ON DELETE CASCADE,\n" +
+                               "                FOREIGN KEY (host_id) REFERENCES log_hosts(host_id) ON DELETE CASCADE\n" +
+                               "                )",
+                               "        CREATE SEQUENCE IF NOT EXISTS subscriptions_seq",
+                               "        CREATE TABLE IF NOT EXISTS subscriptions (\n" +
+                               "                      subscription_id bigint PRIMARY KEY DEFAULT nextval('subscriptions_seq'),\n" +
+                               "                      user_id bigint NOT NULL,\n" +
+                               "                      host_id bigint NOT NULL,\n" +
+                               "                      expression text NOT NULL,\n" +
+                               "                      send_as_batch boolean NOT NULL DEFAULT false,\n" +
+                               "                      batch_duration_minutes integer,\n" +
+                               "                      FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,\n" +
+                               "                      FOREIGN KEY (host_id) REFERENCES log_hosts(host_id) ON DELETE CASCADE\n" +
+                               "                    )"};
+        Stream.of(sql).forEach(jdbcTemplate::update);
 
-        sql = "CREATE TABLE IF NOT EXISTS "+ USER_TABLE +" (" +
-                "user_id bigint PRIMARY KEY DEFAULT nextval('user_seq'),"+
-                "login text NOT NULL,"+
-                "email text NOT NULL,"+
-                "password text NOT NULL"+
-                ")";
-        jdbcTemplate.update( sql );
-
-        sql = "CREATE UNIQUE INDEX IF NOT EXISTS idx_user_login ON "+ USER_TABLE +"(lower(login))";
-        jdbcTemplate.update( sql );
-
-        sql = "CREATE UNIQUE INDEX IF NOT EXISTS idx_user_email ON "+ USER_TABLE +"(lower(email))";
-        jdbcTemplate.update( sql );
-
-        // host groups
-        sql = "CREATE SEQUENCE IF NOT EXISTS host_group_seq";
-        jdbcTemplate.update( sql );
-
-        sql = "CREATE TABLE IF NOT EXISTS "+ HOSTGROUPS_TABLE+" (" +
-                "host_group_id bigint PRIMARY KEY DEFAULT nextval('host_group_seq'),"+
-                "name text NOT NULL"+
-                ")";
-        jdbcTemplate.update( sql );
-
-        sql = "CREATE UNIQUE INDEX IF NOT EXISTS idx_host_group_name ON "+ HOSTGROUPS_TABLE+"(lower(name))";
-        jdbcTemplate.update( sql );
-
-        // user-to-hostgroups
-        sql = "CREATE TABLE IF NOT EXISTS "+ USERS_TO_HOSTGROUPS_TABLE+" (" +
-                "host_group_id bigint NOT NULL,"+
-                "user_id bigint NOT NULL," +
-                "FOREIGN KEY host_group_id REFERENCES "+HOSTGROUPS_TABLE+"(host_group_id) ON DELETE CASCADE,"+
-                "FOREIGN KEY user_id REFERENCES "+USER_TABLE+"(user_id) ON DELETE CASCADE"+
-                ")";
-        jdbcTemplate.update( sql );
-
-        sql = "CREATE UNIQUE INDEX IF NOT EXISTS idx_host_group ON "+ USERS_TO_HOSTGROUPS_TABLE +
-                "(host_group_id,user_id)";
-        jdbcTemplate.update( sql );
-
-        // hosts-to-hostgroups
-        sql = "CREATE TABLE IF NOT EXISTS "+ HOSTS_TO_HOSTGROUPS_TABLE +" (" +
-                "host_group_id bigint NOT NULL,"+
-                "host_id bigint NOT NULL," +
-                "FOREIGN KEY host_group_id REFERENCES "+HOSTGROUPS_TABLE+"(host_group_id) ON DELETE CASCADE,"+
-                "FOREIGN KEY host_id REFERENCES "+ PostgreSQLHostIdManager.HOSTS_TABLE+"(host_id) ON DELETE CASCADE"+
-                ")";
-        jdbcTemplate.update( sql );
-
-        // subscriptions
-        jdbcTemplate.update("CREATE SEQUENCE IF NOT EXISTS subscriptions_seq");
-
-        jdbcTemplate.update("CREATE TABLE IF NOT EXISTS subscriptions (\n" +
-                "      subscription_id bigint PRIMARY KEY DEFAULT nextval('subscriptions_seq'),\n" +
-                "      user_id bigint NOT NULL,\n" +
-                "      host_id bigint NOT NULL,\n" +
-                "      expression text NOT NULL,\n" +
-                "      send_as_batch boolean NOT NULL DEFAULT false,\n" +
-                "      batch_duration_minutes integer,\n" +
-                "      FOREIGN KEY user_id REFERENCES users(user_id) ON DELETE CASCADE,\n" +
-                "      FOREIGN KEY host_id REFERENCES hosts(host_id) ON DELETE CASCADE\n" +
-                "    )");
-
-                if ( getUserByLogin( "admin" ).isEmpty() ) {
-                    final User admin=new User();
-                    admin.email="root@localhost";
-                    admin.loginName="admin";
-                    admin.passwordHash= HashUtils.hashPassword("admin");
-                    saveUser( admin );
-                }
+        if ( getUserByLogin( "admin" ).isEmpty() ) {
+            final User admin=new User();
+            admin.email="root@localhost";
+            admin.loginName="admin";
+            admin.passwordHash= HashUtils.hashPassword("admin");
+            saveUser( admin );
+        }
     }
 
     @PostConstruct
@@ -453,8 +433,8 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
         getSpringProxy().createTables();
     }
 
-    private DatabaseBackend getSpringProxy() {
-        return this.applicationContext.getBean( DatabaseBackend.class );
+    private IDatabaseBackend getSpringProxy() {
+        return this.applicationContext.getBean( IDatabaseBackend.class );
     }
 
     @Resource

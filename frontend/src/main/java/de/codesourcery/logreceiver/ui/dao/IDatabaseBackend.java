@@ -28,4 +28,7 @@ public interface IDatabaseBackend
     List<Subscription> getSubscriptions(Host host);
     void deleteSubscription(Subscription sub);
     void saveSubscription(Subscription sub);
+
+    // not part of public API
+    void createTables();
 }

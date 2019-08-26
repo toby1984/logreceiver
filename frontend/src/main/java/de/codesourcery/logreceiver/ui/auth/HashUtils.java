@@ -15,7 +15,7 @@ public class HashUtils
 
     private static final ThreadLocal<SecureRandom> random = ThreadLocal.withInitial( SecureRandom::new );
 
-    private static final int iterations = 10000;
+    private static final int iterations = 1000;
     private static final int keyLength = 512;
 
     public static byte[] fromHexString(String s)
@@ -44,7 +44,8 @@ public class HashUtils
 
     public static boolean comparePasswords(String password,String hashedPassword)
     {
-        final String salt = hashedPassword.split(":")[2];
+        final String[] parts = hashedPassword.split(":");
+        final String salt = parts[2];
         final byte[] saltBytes = fromHexString( salt );
         final String actualHash = hashPassword( password, saltBytes );
         return hashedPassword.equals( actualHash );
