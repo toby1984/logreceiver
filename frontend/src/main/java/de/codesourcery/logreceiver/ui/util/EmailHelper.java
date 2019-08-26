@@ -1,11 +1,11 @@
-package de.codesourcery.logreceiver.ui;
+package de.codesourcery.logreceiver.ui.util;
 
 import de.codesourcery.logreceiver.entity.Configuration;
+import de.codesourcery.logreceiver.ui.pages.ActivateUserPage;
 import org.apache.commons.lang3.Validate;
 import org.apache.wicket.Page;
 import org.apache.wicket.core.request.handler.PageProvider;
 import org.apache.wicket.core.request.handler.RenderPageRequestHandler;
-import org.apache.wicket.protocol.http.RequestUtils;
 import org.apache.wicket.request.Url;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.mapper.parameter.PageParameters;

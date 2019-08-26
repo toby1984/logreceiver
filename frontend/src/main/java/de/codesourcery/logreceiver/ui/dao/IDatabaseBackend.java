@@ -18,11 +18,14 @@ public interface IDatabaseBackend
     void leaveHostGroup(User user, HostGroup group);
     List<User> getMembers(HostGroup group);
     List<HostGroup> getHostGroups(User user);
+
     // host groups
     List<HostGroup> getAllHostGroups();
     Optional<HostGroup> getHostGroup(long id);
     void saveHostGroup(HostGroup group);
     void deleteHostGroup(HostGroup group);
+    int getHostGroupCount();
+
     // subscriptions
     List<Subscription> getSubscriptions(User user);
     List<Subscription> getSubscriptions(Host host);

@@ -1,4 +1,4 @@
-package de.codesourcery.logreceiver.ui;
+package de.codesourcery.logreceiver.ui.pages;
 
 import de.codesourcery.logreceiver.ui.auth.IAuthenticator;
 import org.apache.wicket.markup.html.basic.Label;
@@ -67,7 +67,7 @@ public class PageWithMenu extends BasePage
     protected void onInitialize()
     {
         super.onInitialize();
-        final MenuItem item1 = new MenuItem(ITEM_WICKET_ID,"Link1", ()-> {});
+        final MenuItem item1 = new MenuItem(ITEM_WICKET_ID,"Manage Host Groups", ()-> setResponsePage(ManageHostGroupsPage.class));
         final MenuItem item2 = new MenuItem(ITEM_WICKET_ID,"Logout", () ->
         {
             getSession().invalidate();

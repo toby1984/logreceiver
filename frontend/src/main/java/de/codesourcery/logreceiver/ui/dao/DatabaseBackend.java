@@ -10,6 +10,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.time.Duration;
@@ -196,7 +199,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
     {
         if ( user.id == 0 ) {
             // new instance
-            final String sql = "INSERT INTO "+ USER_TABLE +" (login,email,password,activated,activation_code) VALUES (?,?,?,?,?)";
+            final String sql = "INSERT INTO "+ USER_TABLE +" (login,email,password,activated,activation_code,is_admin) VALUES (?,?,?,?,?,?)";
             final GeneratedKeyHolder holder = new GeneratedKeyHolder();
             jdbcTemplate.update(con ->
             {
@@ -206,13 +209,14 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                 stmt.setString(3,user.passwordHash);
                 stmt.setBoolean(4,user.activated);
                 stmt.setString(5,user.activationCode);
+                stmt.setBoolean(6,user.isAdmin());
                 return stmt;
             },holder);
             user.id = ((Number) holder.getKeys().get("user_id")).longValue();
         } else {
             // update existing instance
-            final String sql = "UPDATE "+ USER_TABLE +" SET login=?,email=?,password=?,activated=?,activation_code=? WHERE user_id=?";
-            jdbcTemplate.update( sql, user.loginName, user.email, user.passwordHash, user.activated, user.activationCode, user.id );
+            final String sql = "UPDATE "+ USER_TABLE +" SET login=?,email=?,password=?,activated=?,activation_code=?,is_admin=? WHERE user_id=?";
+            jdbcTemplate.update( sql, user.loginName, user.email, user.passwordHash, user.activated, user.activationCode, user.isAdmin(), user.id );
         }
     }
 
@@ -253,6 +257,18 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
     {
         final String sql = "SELECT h.* FROM "+HOSTGROUPS_TABLE+" h, "+USERS_TO_HOSTGROUPS_TABLE+" u WHERE u.user_id=?";
         return jdbcTemplate.query( sql, GROUP_MAPPER, user.id );
+    }
+
+    @Override
+    public int getHostGroupCount()
+    {
+        final String sql = "SELECT count(*) FROM "+HOSTGROUPS_TABLE;
+        final int[] count = {0};
+        jdbcTemplate.query(sql, resultSet ->
+        {
+            count[0] = resultSet.getInt(1);
+        });
+        return count[0];
     }
 
     @Transactional
@@ -392,7 +408,8 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                "                email text NOT NULL,\n" +
                                "                activation_code text DEFAULT NULL,\n" +
                                "                activated boolean NOT NULL DEFAULT false,\n" +
-                               "                password text NOT NULL)",
+                               "                password text NOT NULL." +
+                               "                is_admin boolean NOT NULL)",
                                "        CREATE UNIQUE INDEX IF NOT EXISTS idx_user_login ON users(lower(login))",
                                "        CREATE UNIQUE INDEX IF NOT EXISTS idx_user_email ON users(lower(email))",
                                "        CREATE SEQUENCE IF NOT EXISTS host_group_seq",

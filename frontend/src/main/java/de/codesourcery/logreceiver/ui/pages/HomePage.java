@@ -1,4 +1,4 @@
-package de.codesourcery.logreceiver.ui;
+package de.codesourcery.logreceiver.ui.pages;
 
 import de.codesourcery.logreceiver.ui.auth.LoginRequired;
 

@@ -1,13 +1,12 @@
-package de.codesourcery.logreceiver.ui;
+package de.codesourcery.logreceiver.ui.pages;
 
+import de.codesourcery.logreceiver.ui.WicketApplication;
 import de.codesourcery.logreceiver.ui.dao.IDatabaseBackend;
 import de.codesourcery.logreceiver.ui.dao.User;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.form.Button;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;

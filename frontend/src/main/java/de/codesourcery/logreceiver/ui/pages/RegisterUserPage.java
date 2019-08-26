@@ -1,4 +1,4 @@
-package de.codesourcery.logreceiver.ui;
+package de.codesourcery.logreceiver.ui.pages;
 
 import de.codesourcery.logreceiver.entity.Configuration;
 import de.codesourcery.logreceiver.ui.auth.HashUtils;
@@ -14,7 +14,6 @@ import org.apache.wicket.model.Model;
 import org.apache.wicket.spring.injection.annot.SpringBean;
 import org.apache.wicket.validation.IValidator;
 import org.apache.wicket.validation.ValidationError;
-import org.apache.wicket.validation.validator.EmailAddressValidator;
 import org.apache.wicket.validation.validator.StringValidator;
 
 import java.util.Objects;

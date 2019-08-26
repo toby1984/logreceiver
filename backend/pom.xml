@@ -9,6 +9,10 @@
   <artifactId>logreceiver-backend</artifactId>
   <dependencies>
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
+    <dependency>
       <groupId>de.codesourcery.logreceiver</groupId>
       <artifactId>maven-library-spring</artifactId>
       <type>pom</type>

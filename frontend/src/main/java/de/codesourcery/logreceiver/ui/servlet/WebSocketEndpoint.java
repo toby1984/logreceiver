@@ -80,19 +80,13 @@ public class WebSocketEndpoint {
         @Override
         public void modifyHandshake(ServerEndpointConfig config, HandshakeRequest request, HandshakeResponse response)
         {
-            try
-            {
-                final HttpSession httpSession = (HttpSession) request.getHttpSession();
-                final ServletContext ctx = httpSession.getServletContext();
-                config.getUserProperties().put( SERVLET_CTX_PROPERTY, ctx );
+            final HttpSession httpSession = (HttpSession) request.getHttpSession();
+            final ServletContext ctx = httpSession.getServletContext();
+            config.getUserProperties().put( SERVLET_CTX_PROPERTY, ctx );
 
-                final WebApplicationContext springCtx = WebApplicationContextUtils.getWebApplicationContext( ctx );
-                if ( SessionListener.get().getUser(httpSession.getId() ) == null ) {
-                    LOG.error("modifyHandshake(): Received unauthorized request for HTTP session "+httpSession.getId() );
-                    throw new RuntimeException("Not authorized");
-                }
-            } catch(RuntimeException e) {
-                throw e;
+            if ( SessionListener.get().getUser(httpSession.getId() ) == null ) {
+                LOG.error("modifyHandshake(): Received unauthorized request for HTTP session "+httpSession.getId() );
+                throw new RuntimeException("Not authorized");
             }
         }
     }

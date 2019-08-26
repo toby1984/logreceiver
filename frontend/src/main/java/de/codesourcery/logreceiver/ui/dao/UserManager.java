@@ -1,6 +1,6 @@
 package de.codesourcery.logreceiver.ui.dao;
 
-import de.codesourcery.logreceiver.ui.EmailHelper;
+import de.codesourcery.logreceiver.ui.util.EmailHelper;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

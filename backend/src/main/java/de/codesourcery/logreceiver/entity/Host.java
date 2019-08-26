@@ -2,6 +2,7 @@ package de.codesourcery.logreceiver.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.net.Inet4Address;
@@ -51,6 +52,14 @@ public class Host implements Serializable
     public String toString()
     {
         return (ip==null? "<NULL>" : ip.getHostAddress()) +" ("+ hostName +")#"+id;
+    }
+
+    public String toPrettyString()
+    {
+        if ( StringUtils.isNotBlank(hostName) ) {
+            return hostName+" ("+ip.getHostAddress()+")";
+        }
+        return ip.getHostAddress();
     }
 
     public Host copy() {
