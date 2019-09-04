@@ -2,13 +2,67 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org/">
 <wicket:head>
+  <style>
+    .w_content_2 {
+      background: black !important;
+    }
+    .w_content_container {
+      background: black !important;
+    }
+    .w_caption {
+      background: black !important;
+    }
+    .w_left {
+      background: gray !important;
+    }
+    .w_right {
+      background: gray !important;
+    }
+    .w_top {
+      background: gray !important;
+    }
+    .w_topleft {
+      background: gray !important;
+    }
+    .w_topright {
+      background: gray !important;
+    }
+    .w_bottom {
+      background: gray !important;
+    }
+    .w_bottomleft {
+      background: gray !important;
+    }
+    .w_bottomright {
+      background: gray !important;
+    }
+  </style>
 </wicket:head>
 <body>
 <wicket:extend>
 
+  <wicket:fragment wicket:id="actionColumn">
+    <button wicket:id="editButton">Edit</button>
+    <button wicket:id="deleteButton">Delete</button>
+  </wicket:fragment>
+
+  <wicket:fragment wicket:id="addFragment">
+    <form wicket:id="nestedForm">
+      <label>        Name: <input type="text" wicket:id="groupName" />
+      </label>
+      <div wicket:id="hosts"/>
+      <button wicket:id="cancelButton">Cancel</button>
+      <button wicket:id="addButton" type="submit">Add</button>
+      <div wicket:id="feedback"/>
+    </form>
+  </wicket:fragment>
+
   <form wicket:id="form">
-    <table wicket:id="dataTable"/>
-    <button wicket:id="addHostGroup"/>
+    <div wicket:id="modalWindow"/>
+    <div wicket:id="refreshContainer">
+      <table wicket:id="dataTable"/>
+    </div>
+    <button wicket:id="addHostGroup">Add</button>
   </form>
 
 </wicket:extend>

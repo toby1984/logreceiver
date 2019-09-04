@@ -7,8 +7,10 @@ import de.codesourcery.logreceiver.ui.auth.HashUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.RowMapper;
@@ -36,8 +38,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
+@DependsOn(value="hostIdManager") // needed because HostIDManager#createTables() needs to run before createTables() in this method
 public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAware
 {
+    private static final org.apache.logging.log4j.Logger LOG = org.apache.logging.log4j.LogManager.getLogger( DatabaseBackend.class );
+
     private static final String USER_TABLE = "users";
     private static final String USERS_TO_HOSTGROUPS_TABLE = "users_to_host_groups";
     private static final String HOSTS_TO_HOSTGROUPS_TABLE = "hosts_to_host_groups";
@@ -139,6 +144,9 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
 
     private Map<Long,Host> getHostsById(Set<Long> ids)
     {
+        if ( ids.isEmpty() ) {
+            return new HashMap<>();
+        }
         final String hostIds = ids.stream().map( x-> Long.toString(x) ).collect( Collectors.joining(","));
         final String sql = "SELECT * FROM "+PostgreSQLHostIdManager.HOSTS_TABLE+" WHERE host_id IN ("+hostIds+")";
         final ResultSetExtractor<Map<Long,Host>> hostMapper = resultSet ->
@@ -299,11 +307,21 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                 return stmt;
             };
             final GeneratedKeyHolder holder = new GeneratedKeyHolder();
-            jdbcTemplate.update( cb );
-            group.id = holder.getKey().longValue();
+            jdbcTemplate.update( cb, holder );
+            group.id = ((Number) holder.getKeys().get("host_group_id")).longValue();
         } else {
             final String sql = "UPDATE "+HOSTGROUPS_TABLE+" SET name=? WHERE host_group_id=?";
             jdbcTemplate.update( sql,group.name, group.id );
+
+            jdbcTemplate.update( "DELETE FROM "+HOSTS_TO_HOSTGROUPS_TABLE+" WHERE host_group_id="+group.id );
+        }
+        final String sql2 = "INSERT INTO "+HOSTS_TO_HOSTGROUPS_TABLE+" (host_group_id,host_id) VALUES (?,?)";
+        for ( Host host : group.hosts )
+        {
+            jdbcTemplate.update( sql2, stmt -> {
+                stmt.setLong(1, group.id );
+                stmt.setLong(2, host.id );
+            } );
         }
     }
 
@@ -408,7 +426,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                "                email text NOT NULL,\n" +
                                "                activation_code text DEFAULT NULL,\n" +
                                "                activated boolean NOT NULL DEFAULT false,\n" +
-                               "                password text NOT NULL." +
+                               "                password text NOT NULL," +
                                "                is_admin boolean NOT NULL)",
                                "        CREATE UNIQUE INDEX IF NOT EXISTS idx_user_login ON users(lower(login))",
                                "        CREATE UNIQUE INDEX IF NOT EXISTS idx_user_email ON users(lower(email))",
@@ -427,7 +445,8 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                "                host_group_id bigint NOT NULL,\n" +
                                "                host_id bigint NOT NULL,\n" +
                                "                FOREIGN KEY (host_group_id) REFERENCES host_groups(host_group_id) ON DELETE CASCADE,\n" +
-                               "                FOREIGN KEY (host_id) REFERENCES log_hosts(host_id) ON DELETE CASCADE\n" +
+                               "                FOREIGN KEY (host_id) REFERENCES log_hosts(host_id) ON DELETE CASCADE," +
+                               "                PRIMARY KEY(host_group_id,host_id)\n" +
                                "                )",
                                "        CREATE SEQUENCE IF NOT EXISTS subscriptions_seq",
                                "        CREATE TABLE IF NOT EXISTS subscriptions (\n" +
@@ -440,7 +459,11 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                "                      FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,\n" +
                                "                      FOREIGN KEY (host_id) REFERENCES log_hosts(host_id) ON DELETE CASCADE\n" +
                                "                    )"};
-        Stream.of(sql).forEach(jdbcTemplate::update);
+        for (String s : sql)
+        {
+            LOG.info("executing \n"+sql);
+            jdbcTemplate.update( s );
+        }
 
         if ( getUserByLogin( "admin" ).isEmpty() ) {
             final User admin=new User();

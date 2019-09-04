@@ -26,7 +26,7 @@
         <constructor-arg ref="config" />
     </bean>
 
-    <bean name="hostIdManager" class="de.codesourcery.logreceiver.logstorage.PostgreSQLHostIdManager">
+    <bean name="hostIdManager" class="de.codesourcery.logreceiver.logstorage.PostgreSQLHostIdManager" lazy-init="false">
         <constructor-arg ref="datasource"/>
         <constructor-arg ref="config"/>
     </bean>
