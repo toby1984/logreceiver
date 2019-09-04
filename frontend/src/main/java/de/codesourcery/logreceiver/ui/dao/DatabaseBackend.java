@@ -53,29 +53,33 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
     {
         final List<Subscription> result = new ArrayList<>();
         final Map<Long,Long> userIdsBySubscriptionId = new HashMap<>();
-        final Map<Long,Long> hostIdsBySubscriptionId = new HashMap<>();
+        final Map<Long,Long> hostGroupIdsBySubscriptionId = new HashMap<>();
         while( rs.next() )
         {
             final Subscription s = new Subscription();
             result.add( s );
             s.id = rs.getLong( "subscription_id" );
             userIdsBySubscriptionId.put( s.id, rs.getLong( "user_id" ) );
-            hostIdsBySubscriptionId.put( s.id, rs.getLong( "host_id" ) );
+            hostGroupIdsBySubscriptionId.put( s.id, rs.getLong( "host_group_id" ) );
             s.expression = rs.getString("expression");
-            s.sendAsBatch = rs.getBoolean("send_as_batch");
             Integer durationMinutes = rs.getInt( "batch_duration" );
             if ( ! rs.wasNull() ) {
                 s.batchDuration = Duration.ofMinutes(durationMinutes);
             }
+            Integer maxBatchSize = rs.getInt("max_batch_size");
+            if ( ! rs.wasNull() ) {
+                s.maxBatchSize = maxBatchSize;
+            }
         }
-        // fetch hosts
-        final Map<Long, Host> hostsById = getHostsById( new HashSet<>( hostIdsBySubscriptionId.values() ) );
+        // fetch host groups
+        final Map<Long, HostGroup> hostGroupsById = getHostGroupsById( new HashSet<>( hostGroupIdsBySubscriptionId.values() ) );
         // fetch users
         final Map<Long, User> usersById = getUsersById( new HashSet<>( userIdsBySubscriptionId.values() ) );
 
         for ( Subscription s : result )
         {
-            s.host = hostsById.get( hostIdsBySubscriptionId.get( s.id ) );
+            final Long groupId = hostGroupIdsBySubscriptionId.get( s.id );
+            s.hostGroup = hostGroupsById.get( groupId );
             s.user = usersById.get( userIdsBySubscriptionId.get( s.id ) );
         }
         return result;
@@ -159,6 +163,21 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             return hostsById;
         };
         return jdbcTemplate.query( sql, hostMapper );
+    }
+
+    private Map<Long,HostGroup> getHostGroupsById(Set<Long> ids)
+    {
+        if ( ids.isEmpty() ) {
+            return new HashMap<>();
+        }
+        final String groupIds = ids.stream().map(x->Long.toString(x)).collect(Collectors.joining( "," ));
+        final String sql = "SELECT * FROM "+HOSTGROUPS_TABLE+" WHERE host_group_id IN ("+groupIds+")";
+        final List<HostGroup> result = jdbcTemplate.query( sql, GROUP_MAPPER );
+        final Map<Long,HostGroup> map = new HashMap<>();
+        for ( HostGroup grp : result ) {
+            map.put(grp.id,grp);
+        }
+        return map;
     }
 
     private Map<Long,User> getUsersById(Set<Long> ids)
@@ -367,8 +386,8 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                 "      user_id bigint NOT NULL,\n" +
                 "      host_id bigint NOT NULL,\n" +
                 "      expression text NOT NULL,\n" +
-                "      send_as_batch boolean NOT NULL DEFAULT false,\n" +
                 "      batch_duration_minutes integer,\n" +
+                "      max_batch_size integer,\n" +
                 "      FOREIGN KEY user_id REFERENCES users(user_id) ON DELETE CASCADE,\n" +
                 "      FOREIGN KEY host_id REFERENCES hosts(host_id) ON DELETE CASCADE\n" +
                 "    )");
@@ -379,21 +398,27 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             {
                 final String sql = "INSERT INTO "+SUBSCRIPTIONS_TABLE+" (" +
                                        "user_id," +
-                                       "host_id," +
+                                       "host_group_id," +
                                        "expression," +
-                                       "send_as_batch," +
-                                       "batch_duration_minutes) VALUES (?,?,?,?,?)";
+                                       "batch_duration_minutes," +
+                                       "max_batch_size) VALUES (?,?,?,?,?)";
                 final PreparedStatement stmt = con.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
                 stmt.setLong( 1, sub.user.id );
-                stmt.setLong( 2, sub.host.id );
+                stmt.setLong( 2, sub.hostGroup.id );
                 stmt.setString( 3, sub.expression);
-                stmt.setBoolean( 4, sub.sendAsBatch);
                 if ( sub.batchDuration == null ) {
+                    stmt.setNull( 4, Types.INTEGER );
+                }
+                else
+                {
+                    stmt.setObject( 4, sub.batchDuration.toMinutes() );
+                }
+                if ( sub.maxBatchSize == null ) {
                     stmt.setNull( 5, Types.INTEGER );
                 }
                 else
                 {
-                    stmt.setObject( 5, sub.batchDuration.toMinutes() );
+                    stmt.setObject( 5, sub.maxBatchSize );
                 }
                 return stmt;
             };
@@ -401,13 +426,14 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             sub.id = holder.getKey().longValue();
         } else {
             jdbcTemplate.update("UPDATE "+SUBSCRIPTIONS_TABLE+" SET user_id=?," +
-                                    "host_id=?,expression=?,send_as_batch=?,batch_duration_minutes=? WHERE" +
+                                    "host_group_id=?,expression=?," +
+                            "batch_duration_minutes=?,max_batch_size=? WHERE" +
                                     " subscription_id=?",
                 sub.user.id,
-                sub.host.id,
+                sub.hostGroup.id,
                 sub.expression,
-                sub.sendAsBatch,
                 sub.batchDuration == null ? null : sub.batchDuration.toMinutes(),
+                sub.maxBatchSize,
                 sub.id);
         }
     }
@@ -454,8 +480,8 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                "                      user_id bigint NOT NULL,\n" +
                                "                      host_id bigint NOT NULL,\n" +
                                "                      expression text NOT NULL,\n" +
-                               "                      send_as_batch boolean NOT NULL DEFAULT false,\n" +
                                "                      batch_duration_minutes integer,\n" +
+                               "                      max_batch_size integer,\n" +
                                "                      FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,\n" +
                                "                      FOREIGN KEY (host_id) REFERENCES log_hosts(host_id) ON DELETE CASCADE\n" +
                                "                    )"};
