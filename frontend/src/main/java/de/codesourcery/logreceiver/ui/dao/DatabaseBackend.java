@@ -4,6 +4,7 @@ import de.codesourcery.logreceiver.entity.Host;
 import de.codesourcery.logreceiver.logstorage.PostgreSQLHostIdManager;
 import de.codesourcery.logreceiver.parsing.JDBCHelper;
 import de.codesourcery.logreceiver.ui.auth.HashUtils;
+import de.codesourcery.logreceiver.util.DateUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -24,8 +25,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Duration;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -62,7 +65,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             userIdsBySubscriptionId.put( s.id, rs.getLong( "user_id" ) );
             hostGroupIdsBySubscriptionId.put( s.id, rs.getLong( "host_group_id" ) );
             s.expression = rs.getString("expression");
-            Integer durationMinutes = rs.getInt( "batch_duration" );
+            Integer durationMinutes = rs.getInt( "max_batch_duration_minutes" );
             if ( ! rs.wasNull() ) {
                 s.batchDuration = Duration.ofMinutes(durationMinutes);
             }
@@ -70,7 +73,12 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             if ( ! rs.wasNull() ) {
                 s.maxBatchSize = maxBatchSize;
             }
+            java.sql.Timestamp watermark = rs.getTimestamp("watermark");
+            if ( watermark != null ) {
+                s.watermark = watermark.toInstant().atZone( DateUtils.UTC );
+            }
         }
+
         // fetch host groups
         final Map<Long, HostGroup> hostGroupsById = getHostGroupsById( new HashSet<>( hostGroupIdsBySubscriptionId.values() ) );
         // fetch users
@@ -386,8 +394,9 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                 "      user_id bigint NOT NULL,\n" +
                 "      host_id bigint NOT NULL,\n" +
                 "      expression text NOT NULL,\n" +
-                "      batch_duration_minutes integer,\n" +
+                "      max_batch_duration_minutes integer,\n" +
                 "      max_batch_size integer,\n" +
+                "      water_mark,\n" +
                 "      FOREIGN KEY user_id REFERENCES users(user_id) ON DELETE CASCADE,\n" +
                 "      FOREIGN KEY host_id REFERENCES hosts(host_id) ON DELETE CASCADE\n" +
                 "    )");
@@ -400,8 +409,9 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                        "user_id," +
                                        "host_group_id," +
                                        "expression," +
-                                       "batch_duration_minutes," +
-                                       "max_batch_size) VALUES (?,?,?,?,?)";
+                                       "max_batch_duration_minutes," +
+                                       "max_batch_size," +
+                        "water_mark) VALUES (?,?,?,?,?,?)";
                 final PreparedStatement stmt = con.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
                 stmt.setLong( 1, sub.user.id );
                 stmt.setLong( 2, sub.hostGroup.id );
@@ -420,6 +430,13 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                 {
                     stmt.setObject( 5, sub.maxBatchSize );
                 }
+                if ( sub.watermark == null ) {
+                    stmt.setNull( 6, Types.TIMESTAMP);
+                }
+                else
+                {
+                    stmt.setObject( 5, Timestamp.valueOf( sub.watermark.toLocalDateTime() ) );
+                }
                 return stmt;
             };
             jdbcTemplate.update(psc, holder );
@@ -427,13 +444,14 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
         } else {
             jdbcTemplate.update("UPDATE "+SUBSCRIPTIONS_TABLE+" SET user_id=?," +
                                     "host_group_id=?,expression=?," +
-                            "batch_duration_minutes=?,max_batch_size=? WHERE" +
+                            "max_batch_duration_minutes=?,max_batch_size=?,water_mark=? WHERE" +
                                     " subscription_id=?",
                 sub.user.id,
                 sub.hostGroup.id,
                 sub.expression,
                 sub.batchDuration == null ? null : sub.batchDuration.toMinutes(),
                 sub.maxBatchSize,
+                sub.watermark == null ? null : java.sql.Timestamp.valueOf(sub.watermark.toLocalDateTime()),
                 sub.id);
         }
     }
@@ -482,6 +500,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                "                      expression text NOT NULL,\n" +
                                "                      batch_duration_minutes integer,\n" +
                                "                      max_batch_size integer,\n" +
+                               "                      water_mar timestamptz,\n" +
                                "                      FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,\n" +
                                "                      FOREIGN KEY (host_id) REFERENCES log_hosts(host_id) ON DELETE CASCADE\n" +
                                "                    )"};
