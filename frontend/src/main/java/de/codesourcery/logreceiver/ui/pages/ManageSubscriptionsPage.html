@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org/">
+<wicket:head>
+  <style>
+    .wicket-modal table {
+      border: none !important;
+    }
+    .wicket-modal th {
+      border: none !important;
+    }
+    .wicket-modal td {
+      border: none !important;
+    }
+  </style>
+</wicket:head>
+<body>
+<wicket:extend>
+
+  <wicket:fragment wicket:id="actionFragment">
+    <button wicket:id="edit">Edit</button>
+    <button wicket:id="delete">Delete</button>
+  </wicket:fragment>
+
+  <wicket:fragment wicket:id="addFragment">
+    <form wicket:id="nestedForm">
+      <table>
+        <tr>
+          <td>Name:</td>
+          <td><input type="text" wicket:id="name"/></td>
+        </tr>
+        <tr>
+          <td>Regex:</td>
+          <td><input type="text" wicket:id="expression"/></td>
+        </tr>
+        <tr>
+          <td>Host groups:</td>
+          <td><select wicket:id="hostGroups"/></td>
+        </tr>
+        <tr>
+          <td>Batch duration:</td>
+          <td><select wicket:id="batchDuration"/></td>
+        </tr>
+        <tr>
+          <td>Max. size:</td>
+          <td><input type="text" wicket:id="maxSize"/></td>
+        </tr>
+        <tr>
+          <td colspan="2" align="center">
+            <button class="button" wicket:id="cancelButton">Cancel</button>
+            <button class="button" wicket:id="addButton" type="submit">Save</button>
+            <span wicket:id="feedback"/>
+          </td>
+        </tr>
+      </table>
+    </form>
+  </wicket:fragment>
+
+  <form wicket:id="form">
+    <div id="modalWindow" wicket:id="modalWindow"/>
+    <div wicket:id="refreshContainer">
+      <table wicket:id="dataTable"/>
+    </div>
+    <button class="button" wicket:id="addSubscription">Add</button>
+  </form>
+
+</wicket:extend>
+</body>
+</html>

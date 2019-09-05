@@ -47,7 +47,6 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
     private static final org.apache.logging.log4j.Logger LOG = org.apache.logging.log4j.LogManager.getLogger( DatabaseBackend.class );
 
     private static final String USER_TABLE = "users";
-    private static final String USERS_TO_HOSTGROUPS_TABLE = "users_to_host_groups";
     private static final String HOSTS_TO_HOSTGROUPS_TABLE = "hosts_to_host_groups";
     private static final String HOSTGROUPS_TABLE = "host_groups";
     private static final String SUBSCRIPTIONS_TABLE = "subscriptions";
@@ -61,6 +60,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
         {
             final Subscription s = new Subscription();
             result.add( s );
+            s.name = rs.getString( "name" );
             s.id = rs.getLong( "subscription_id" );
             userIdsBySubscriptionId.put( s.id, rs.getLong( "user_id" ) );
             hostGroupIdsBySubscriptionId.put( s.id, rs.getLong( "host_group_id" ) );
@@ -73,7 +73,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             if ( ! rs.wasNull() ) {
                 s.maxBatchSize = maxBatchSize;
             }
-            java.sql.Timestamp watermark = rs.getTimestamp("watermark");
+            java.sql.Timestamp watermark = rs.getTimestamp("water_mark");
             if ( watermark != null ) {
                 s.watermark = watermark.toInstant().atZone( DateUtils.UTC );
             }
@@ -110,12 +110,23 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
 
     private final ResultSetExtractor<List<HostGroup>> GROUP_MAPPER = rs ->
     {
+        final Set<Long> userIds = new HashSet<>();
+        final Map<Long,Long> userIdByGroupId = new HashMap<>();
+
         final Map<Long,HostGroup> hostGroupsById = new HashMap<>();
         while ( rs.next() ) {
             final HostGroup grp = new HostGroup();
             grp.id = rs.getLong("host_group_id");
             grp.name = rs.getString("name");
+            final long userId = rs.getLong("user_id");
+            userIds.add(userId);
+            userIdByGroupId.put( grp.id, userId );
             hostGroupsById.put( grp.id , grp );
+        }
+        final Map<Long, User> users = getUsersById(userIds);
+        for ( HostGroup grp : hostGroupsById.values() )
+        {
+            grp.user = users.get( userIdByGroupId.get( grp.id ) );
         }
         if ( ! hostGroupsById.isEmpty() )
         {
@@ -190,6 +201,9 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
 
     private Map<Long,User> getUsersById(Set<Long> ids)
     {
+        if ( ids.isEmpty() ) {
+            return new HashMap<>();
+        }
         final String userIds = ids.stream().map( x-> Long.toString(x) ).collect( Collectors.joining(","));
         final String sql = "SELECT * FROM "+USER_TABLE+" WHERE user_id IN ("+userIds+")";
         final ResultSetExtractor<Map<Long,User>> hostMapper = resultSet ->
@@ -264,33 +278,9 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
 
     @Transactional
     @Override
-    public void joinHostGroup(User user, HostGroup group)
-    {
-        final String sql = "INSERT INTO "+USERS_TO_HOSTGROUPS_TABLE+" (host_group_id,user_id) VALUES (?,?)";
-        jdbcTemplate.update( sql, group.id, user.id );
-    }
-
-    @Transactional
-    @Override
-    public void leaveHostGroup(User user, HostGroup group)
-    {
-        final String sql = "DELETE FROM "+USERS_TO_HOSTGROUPS_TABLE+" WHERE host_group_id,=? AND user_id=?";
-        jdbcTemplate.update( sql, group.id, user.id );
-    }
-
-    @Transactional
-    @Override
-    public List<User> getMembers(HostGroup group)
-    {
-        final String sql = "SELECT u.* FROM "+USER_TABLE+" u, "+USERS_TO_HOSTGROUPS_TABLE+" h WHERE u.user_id=h.user_id AND h.host_group_id=?";
-        return jdbcTemplate.query( sql, USER_MAPPER, group.id );
-    }
-
-    @Transactional
-    @Override
     public List<HostGroup> getHostGroups(User user)
     {
-        final String sql = "SELECT h.* FROM "+HOSTGROUPS_TABLE+" h, "+USERS_TO_HOSTGROUPS_TABLE+" u WHERE u.user_id=?";
+        final String sql = "SELECT * FROM "+HOSTGROUPS_TABLE+" WHERE user_id=?";
         return jdbcTemplate.query( sql, GROUP_MAPPER, user.id );
     }
 
@@ -327,28 +317,23 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
     public void saveHostGroup(HostGroup group)
     {
         if ( group.id == 0 ) {
-            final String sql = "INSERT INTO "+HOSTGROUPS_TABLE+" (name) VALUES (?)";
+            final String sql = "INSERT INTO "+HOSTGROUPS_TABLE+" (name,user_id) VALUES (?,?)";
             final PreparedStatementCreator cb = con -> {
                 final PreparedStatement stmt = con.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
                 stmt.setString(1,group.name);
+                stmt.setLong(2,group.user.id);
                 return stmt;
             };
             final GeneratedKeyHolder holder = new GeneratedKeyHolder();
             jdbcTemplate.update( cb, holder );
             group.id = ((Number) holder.getKeys().get("host_group_id")).longValue();
         } else {
-            final String sql = "UPDATE "+HOSTGROUPS_TABLE+" SET name=? WHERE host_group_id=?";
-            jdbcTemplate.update( sql,group.name, group.id );
-
-            jdbcTemplate.update( "DELETE FROM "+HOSTS_TO_HOSTGROUPS_TABLE+" WHERE host_group_id="+group.id );
+            final String sql = "UPDATE "+HOSTGROUPS_TABLE+" SET name=?,user_id=? WHERE host_group_id=?";
+            jdbcTemplate.update( sql,group.name, group.user.id, group.id );
         }
-        final String sql2 = "INSERT INTO "+HOSTS_TO_HOSTGROUPS_TABLE+" (host_group_id,host_id) VALUES (?,?)";
-        for ( Host host : group.hosts )
-        {
-            jdbcTemplate.update( sql2, stmt -> {
-                stmt.setLong(1, group.id );
-                stmt.setLong(2, host.id );
-            } );
+        jdbcTemplate.update("DELETE FROM "+HOSTS_TO_HOSTGROUPS_TABLE+" WHERE host_group_id=?",group.id);
+        for ( Host h : group.hosts ) {
+            jdbcTemplate.update("INSERT INTO "+HOSTS_TO_HOSTGROUPS_TABLE+" (host_group_id,host_id) VALUES (?,?)", group.id, h.id );
         }
     }
 
@@ -391,12 +376,14 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             /*
         jdbcTemplate.update("CREATE TABLE IF NOT EXISTS subscriptions (\n" +
                 "      subscription_id bigint PRIMARY KEY DEFAULT nextval('subscriptions_seq'),\n" +
+                "      name text NOT NULL,\n" +
                 "      user_id bigint NOT NULL,\n" +
-                "      host_id bigint NOT NULL,\n" +
+                "      host_group_id bigint NOT NULL,\n" +
                 "      expression text NOT NULL,\n" +
                 "      max_batch_duration_minutes integer,\n" +
                 "      max_batch_size integer,\n" +
                 "      water_mark,\n" +
+                "      UNIQUE(user_id,name),\n"+
                 "      FOREIGN KEY user_id REFERENCES users(user_id) ON DELETE CASCADE,\n" +
                 "      FOREIGN KEY host_id REFERENCES hosts(host_id) ON DELETE CASCADE\n" +
                 "    )");
@@ -407,46 +394,49 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             {
                 final String sql = "INSERT INTO "+SUBSCRIPTIONS_TABLE+" (" +
                                        "user_id," +
+                                       "name,"+
                                        "host_group_id," +
                                        "expression," +
                                        "max_batch_duration_minutes," +
                                        "max_batch_size," +
-                        "water_mark) VALUES (?,?,?,?,?,?)";
+                        "water_mark) VALUES (?,?,?,?,?,?,?)";
                 final PreparedStatement stmt = con.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
                 stmt.setLong( 1, sub.user.id );
-                stmt.setLong( 2, sub.hostGroup.id );
-                stmt.setString( 3, sub.expression);
+                stmt.setString( 2, sub.name );
+                stmt.setLong( 3, sub.hostGroup.id );
+                stmt.setString( 4, sub.expression);
                 if ( sub.batchDuration == null ) {
-                    stmt.setNull( 4, Types.INTEGER );
-                }
-                else
-                {
-                    stmt.setObject( 4, sub.batchDuration.toMinutes() );
-                }
-                if ( sub.maxBatchSize == null ) {
                     stmt.setNull( 5, Types.INTEGER );
                 }
                 else
                 {
-                    stmt.setObject( 5, sub.maxBatchSize );
+                    stmt.setObject( 5, sub.batchDuration.toMinutes() );
                 }
-                if ( sub.watermark == null ) {
-                    stmt.setNull( 6, Types.TIMESTAMP);
+                if ( sub.maxBatchSize == null ) {
+                    stmt.setNull( 6, Types.INTEGER );
                 }
                 else
                 {
-                    stmt.setObject( 5, Timestamp.valueOf( sub.watermark.toLocalDateTime() ) );
+                    stmt.setObject( 6, sub.maxBatchSize );
+                }
+                if ( sub.watermark == null ) {
+                    stmt.setNull( 7, Types.TIMESTAMP);
+                }
+                else
+                {
+                    stmt.setObject( 7, Timestamp.valueOf( sub.watermark.toLocalDateTime() ) );
                 }
                 return stmt;
             };
             jdbcTemplate.update(psc, holder );
-            sub.id = holder.getKey().longValue();
+            sub.id = ((Number) holder.getKeys().get("subscription_id")).longValue();
         } else {
-            jdbcTemplate.update("UPDATE "+SUBSCRIPTIONS_TABLE+" SET user_id=?," +
+            jdbcTemplate.update("UPDATE "+SUBSCRIPTIONS_TABLE+" SET user_id=?,name=?," +
                                     "host_group_id=?,expression=?," +
                             "max_batch_duration_minutes=?,max_batch_size=?,water_mark=? WHERE" +
                                     " subscription_id=?",
                 sub.user.id,
+                sub.name,
                 sub.hostGroup.id,
                 sub.expression,
                 sub.batchDuration == null ? null : sub.batchDuration.toMinutes(),
@@ -477,14 +467,12 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                "        CREATE SEQUENCE IF NOT EXISTS host_group_seq",
                                "        CREATE TABLE IF NOT EXISTS host_groups (\n" +
                                "                host_group_id bigint PRIMARY KEY DEFAULT nextval('host_group_seq'),\n" +
-                               "                name text NOT NULL)",
+                               "                user_id bigint NOT NULL,\n"+
+                               "                name text NOT NULL," +
+                               "                FOREIGN KEY (user_id) REFERENCES users(user_id)"+
+                               ")",
+                               "CREATE UNIQUE INDEX IF NOT EXISTS idx_host_group_name  ON host_groups(user_id,lower(name))",
                                "        CREATE UNIQUE INDEX IF NOT EXISTS idx_host_group_name ON host_groups(lower(name))",
-                               "        CREATE TABLE IF NOT EXISTS users_to_host_groups (\n" +
-                               "                host_group_id bigint NOT NULL,\n" +
-                               "                user_id bigint NOT NULL,\n" +
-                               "                FOREIGN KEY (host_group_id) REFERENCES host_groups(host_group_id) ON DELETE CASCADE,\n" +
-                               "                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE)",
-                               "        CREATE UNIQUE INDEX IF NOT EXISTS idx_host_group ON users_to_host_groups(host_group_id,user_id)",
                                "        CREATE TABLE IF NOT EXISTS hosts_to_host_groups (\n" +
                                "                host_group_id bigint NOT NULL,\n" +
                                "                host_id bigint NOT NULL,\n" +
@@ -494,19 +482,21 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                "                )",
                                "        CREATE SEQUENCE IF NOT EXISTS subscriptions_seq",
                                "        CREATE TABLE IF NOT EXISTS subscriptions (\n" +
-                               "                      subscription_id bigint PRIMARY KEY DEFAULT nextval('subscriptions_seq'),\n" +
+                               "                      subscription_id bigint PRIMARY KEY DEFAULT nextval('subscriptions_seq'),\n"+
+                               "                      name text NOT NULL,\n"+
                                "                      user_id bigint NOT NULL,\n" +
-                               "                      host_id bigint NOT NULL,\n" +
+                               "                      host_group_id bigint NOT NULL,\n" +
                                "                      expression text NOT NULL,\n" +
-                               "                      batch_duration_minutes integer,\n" +
+                               "                      max_batch_duration_minutes integer,\n" +
                                "                      max_batch_size integer,\n" +
-                               "                      water_mar timestamptz,\n" +
+                               "                      water_mark timestamptz,\n" +
                                "                      FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,\n" +
-                               "                      FOREIGN KEY (host_id) REFERENCES log_hosts(host_id) ON DELETE CASCADE\n" +
-                               "                    )"};
+                               "                      FOREIGN KEY (host_group_id) REFERENCES host_groups(host_group_id) ON DELETE CASCADE\n" +
+                               "                    )",
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_subscription_name  ON subscriptions(user_id,lower(name))"};
         for (String s : sql)
         {
-            LOG.info("executing \n"+sql);
+            LOG.info("executing \n"+s);
             jdbcTemplate.update( s );
         }
 

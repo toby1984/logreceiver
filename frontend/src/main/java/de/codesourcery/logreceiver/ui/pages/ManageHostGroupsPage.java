@@ -5,6 +5,7 @@ import de.codesourcery.logreceiver.storage.IHostManager;
 import de.codesourcery.logreceiver.ui.auth.LoginRequired;
 import de.codesourcery.logreceiver.ui.dao.HostGroup;
 import de.codesourcery.logreceiver.ui.dao.IDatabaseBackend;
+import de.codesourcery.logreceiver.ui.util.ClickButton;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
@@ -89,7 +90,7 @@ public class ManageHostGroupsPage extends PageWithMenu
 
         private void load() {
             if ( data == null ) {
-                data = backend.getAllHostGroups();
+                data = backend.getHostGroups( currentUser() );
                 data.sort( Comparator.comparing(x -> x.name ) );
             }
         }
@@ -115,15 +116,7 @@ public class ManageHostGroupsPage extends PageWithMenu
 
         final Form form = new Form<>("form");
 
-        final AjaxButton addButton = new AjaxButton( "addHostGroup")
-        {
-            @Override
-            public void onSubmit(AjaxRequestTarget target)
-            {
-                edit( new HostGroup(), target );
-            }
-        };
-        addButton.setDefaultFormProcessing( false );
+        final ClickButton<Void> addButton = ClickButton.simple( "addHostGroup", target -> edit( new HostGroup(currentUser()), target ) );
 
         this.dataTable = new DefaultDataTable<>( "dataTable", createTableColumns(), dataProvider, ROWS_PER_PAGE);
         queue( form, refreshContainer, addButton, modal,this.dataTable );
@@ -167,15 +160,7 @@ public class ManageHostGroupsPage extends PageWithMenu
         final Palette<Host> palette = new Palette<>( "hosts", selected, choices, choiceRender, 10, false );
         palette.add( new CustomTheme() );
 
-        final AjaxButton cancelButton = new AjaxButton("cancelButton")
-        {
-            @Override
-            protected void onSubmit(AjaxRequestTarget target)
-            {
-                modal.close( target );
-            }
-        };
-        cancelButton.setDefaultFormProcessing( false );
+        final ClickButton<Void> cancelButton = ClickButton.simple("cancelButton", target ->  modal.close( target ) );
 
         final AjaxButton addButton = new AjaxButton("addButton",form)
         {
@@ -215,27 +200,25 @@ public class ManageHostGroupsPage extends PageWithMenu
                 Fragment frag = new Fragment( componentId, "actionColumn", ManageHostGroupsPage.this );
 
                 // edit
-                final AjaxButton editButton = new AjaxButton( "editButton" )
+                final ClickButton<HostGroup> editButton = new ClickButton<>( "editButton", rowModel )
                 {
                     @Override
-                    protected void onSubmit(AjaxRequestTarget target)
+                    protected void onClick(HostGroup data, AjaxRequestTarget target)
                     {
-                        edit(rowModel.getObject(), target );
+                        edit(data, target );
                     }
                 };
-                editButton.setDefaultFormProcessing( false );
 
                 // delete
-                final AjaxButton deleteButton = new AjaxButton( "deleteButton" )
+                final ClickButton<HostGroup> deleteButton = new ClickButton<>( "deleteButton", rowModel)
                 {
                     @Override
-                    protected void onSubmit(AjaxRequestTarget target)
+                    protected void onClick(HostGroup data, AjaxRequestTarget target)
                     {
-                        backend.deleteHostGroup( rowModel.getObject() );
+                        backend.deleteHostGroup( data );
                         refresh(target);
                     }
                 };
-                deleteButton.setDefaultFormProcessing( false );
 
                 frag.queue( editButton, deleteButton );
                 cellItem.add( frag );

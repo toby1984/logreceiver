@@ -1,7 +1,7 @@
 package de.codesourcery.logreceiver.ui.pages;
 
 import de.codesourcery.logreceiver.ui.MySession;
-import org.apache.wicket.Session;
+import de.codesourcery.logreceiver.ui.dao.User;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
@@ -9,12 +9,17 @@ import org.apache.wicket.model.ResourceModel;
 public class BasePage extends WebPage
 {
     @Override
-    public MySession getSession()
+    public final MySession getSession()
     {
         return (MySession) super.getSession();
     }
 
-    protected IModel<String> resource(String key) {
+    protected final IModel<String> resource(String key) {
         return new ResourceModel(key);
+    }
+
+    protected final User currentUser()
+    {
+        return getSession().getUser();
     }
 }

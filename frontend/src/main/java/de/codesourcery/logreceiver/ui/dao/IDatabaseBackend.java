@@ -14,9 +14,6 @@ public interface IDatabaseBackend
     void saveUser(User user);
     void deleteUser(User user);
     // host group <-> user
-    void joinHostGroup(User user, HostGroup group);
-    void leaveHostGroup(User user, HostGroup group);
-    List<User> getMembers(HostGroup group);
     List<HostGroup> getHostGroups(User user);
 
     // host groups

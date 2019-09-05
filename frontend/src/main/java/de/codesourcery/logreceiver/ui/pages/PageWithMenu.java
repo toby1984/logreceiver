@@ -68,14 +68,15 @@ public class PageWithMenu extends BasePage
     {
         super.onInitialize();
         final MenuItem item1 = new MenuItem(ITEM_WICKET_ID,"Home", ()-> setResponsePage(HomePage.class));
-        final MenuItem item2 = new MenuItem(ITEM_WICKET_ID,"Manage Host Groups", ()-> setResponsePage(ManageHostGroupsPage.class));
-        final MenuItem item3 = new MenuItem(ITEM_WICKET_ID,"Logout", () ->
+        final MenuItem item2 = new MenuItem(ITEM_WICKET_ID,"Manage Subscriptions", ()-> setResponsePage(ManageSubscriptionsPage.class));
+        final MenuItem item3 = new MenuItem(ITEM_WICKET_ID,"Manage Host Groups", ()-> setResponsePage(ManageHostGroupsPage.class));
+        final MenuItem item4 = new MenuItem(ITEM_WICKET_ID,"Logout", () ->
         {
             getSession().invalidate();
             setResponsePage(HomePage.class);
         }, () -> PageWithMenu.this.getSession().isUserLoggedIn() );
 
-        final List<MenuItem> menuItems = List.of(item1, item2,item3);
+        final List<MenuItem> menuItems = List.of(item1, item2,item3,item4);
 
         final ListView<MenuItem> items = new ListView<>("menuItems", menuItems) {
             @Override

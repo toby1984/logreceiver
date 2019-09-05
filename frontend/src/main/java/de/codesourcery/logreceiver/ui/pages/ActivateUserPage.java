@@ -3,6 +3,7 @@ package de.codesourcery.logreceiver.ui.pages;
 import de.codesourcery.logreceiver.ui.WicketApplication;
 import de.codesourcery.logreceiver.ui.dao.IDatabaseBackend;
 import de.codesourcery.logreceiver.ui.dao.User;
+import de.codesourcery.logreceiver.ui.util.ClickButton;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
@@ -39,16 +40,9 @@ public class ActivateUserPage extends BasePage
 
         queue( new Form<>("dummyForm") );
 
-        final AjaxButton button = new AjaxButton("backLink")
-        {
-            @Override
-            protected void onSubmit(AjaxRequestTarget target)
-            {
-                setResponsePage( WicketApplication.get().getHomePage() );
-                super.onSubmit(target);
-            }
-        };
-        button.setDefaultFormProcessing(false);
+        final ClickButton<Void> button = ClickButton.simple( "backLink", target ->
+                                                                             setResponsePage(WicketApplication.get().getHomePage())
+        );
         queue(button);
 
         final IModel<String> msgModel = () ->

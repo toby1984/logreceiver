@@ -1,0 +1,58 @@
+.w_content_2 {
+    background: black !important;
+}
+.w_content_container {
+    background: black !important;
+}
+.w_caption {
+    background: black !important;
+}
+.w_left {
+    background: gray !important;
+}
+.w_right {
+    background: gray !important;
+}
+.w_top {
+    background: gray !important;
+}
+.w_topleft {
+    background: gray !important;
+}
+.w_topright {
+    background: gray !important;
+}
+.w_bottom {
+    background: gray !important;
+}
+.w_bottomleft {
+    background: gray !important;
+}
+.w_bottomright {
+    background: gray !important;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid lawngreen;
+}
+
+body {
+    background-color: black;
+    color: lawngreen;
+}
+
+table tbody tr.even {
+
+}
+
+table tbody tr.odd {
+  background-color: #505050;
+}
+
+.button {
+    margin: 10px;
+}

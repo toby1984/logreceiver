@@ -18,6 +18,9 @@
             height:250px;
             width:300px;
         }
+        table,th,td {
+            border: none !important;
+        }
     </style>
 </wicket:head>
 <body>
@@ -25,7 +28,7 @@
     <div class="center">
         <div>
         <form id="loginForm" wicket:id="loginForm">
-            <table>
+            <table style="border:none">
                 <tr>
                     <td><label for="login">Login:</label></td>
                     <td><input id="login" type="text" autofocus="autofocus" wicket:id="login" size="20"></input></td>
