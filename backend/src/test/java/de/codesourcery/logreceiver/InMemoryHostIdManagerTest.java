@@ -3,6 +3,7 @@ package de.codesourcery.logreceiver;
 import de.codesourcery.logreceiver.entity.Configuration;
 import de.codesourcery.logreceiver.entity.Host;
 import de.codesourcery.logreceiver.storage.InMemoryHostIdManager;
+import de.codesourcery.logreceiver.util.EventBus;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,7 +18,7 @@ public class InMemoryHostIdManagerTest
 
     @Before
     public void setup() {
-        manager = new InMemoryHostIdManager(new Configuration());
+        manager = new InMemoryHostIdManager(new Configuration(), new EventBus());
     }
 
     @Test

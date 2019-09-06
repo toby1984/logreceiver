@@ -4,6 +4,7 @@ import de.codesourcery.logreceiver.entity.Configuration;
 import de.codesourcery.logreceiver.entity.Host;
 import de.codesourcery.logreceiver.parsing.JDBCHelper;
 import de.codesourcery.logreceiver.storage.InMemoryHostIdManager;
+import de.codesourcery.logreceiver.util.EventBus;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -57,9 +58,9 @@ public class PostgreSQLHostIdManager extends InMemoryHostIdManager
 
     private final DataSource ds;
 
-    public PostgreSQLHostIdManager(DataSource ds, Configuration config) throws SQLException
+    public PostgreSQLHostIdManager(DataSource ds, Configuration config, EventBus eventBus) throws SQLException
     {
-        super(config);
+        super(config, eventBus);
         this.ds = ds;
         createTable();
         loadTable();

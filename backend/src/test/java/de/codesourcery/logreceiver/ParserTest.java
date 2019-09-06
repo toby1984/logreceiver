@@ -5,6 +5,7 @@ import de.codesourcery.logreceiver.parsing.ILogParser;
 import de.codesourcery.logreceiver.parsing.RFC5424Parser;
 import de.codesourcery.logreceiver.logstorage.SQLLogWriter;
 import de.codesourcery.logreceiver.storage.InMemoryHostIdManager;
+import de.codesourcery.logreceiver.util.EventBus;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,7 +37,8 @@ public class ParserTest
             lines.add( line );
         }
 
-        final InMemoryHostIdManager hostIdManager = new InMemoryHostIdManager( new Configuration() );
+        final InMemoryHostIdManager hostIdManager =
+                new InMemoryHostIdManager( new Configuration(), new EventBus() );
         final SQLLogWriter writer = new SQLLogWriter(storage, hostIdManager );
         final ILogParser p = new RFC5424Parser( hostIdManager, writer );
 

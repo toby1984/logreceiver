@@ -6,7 +6,9 @@ import de.codesourcery.logreceiver.entity.SyslogMessage;
 import de.codesourcery.logreceiver.filtering.IFilterCallback;
 import de.codesourcery.logreceiver.parsing.JDBCHelper;
 import de.codesourcery.logreceiver.util.DateUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class MessageDAO
 {
@@ -29,13 +32,32 @@ public class MessageDAO
         return helper.queryForLong( sql );
     }
 
+    public void visitMessages(Host currentHost, Consumer<SyslogMessage> consumer, List<Long> batch)
+    {
+        if ( batch.isEmpty() ) {
+            return;
+        }
+        final String sql = "SELECT * FROM "+PartitionNamePattern.parentTableName( currentHost )+
+                " WHERE entry_id IN ("+StringUtils.join(batch,",")+") ORDER BY entry_id ASC";
+
+        final org.springframework.jdbc.core.ResultSetExtractor<Void> extractor = rs ->
+        {
+            while ( rs.next() )
+            {
+                consumer.accept( DefaultResultSetExtractor.parse( currentHost, rs ) );
+            }
+            return null;
+        };
+        helper.execStreamingQuery( sql, extractor );
+    }
+
     @FunctionalInterface
     private interface ResultSetExtractor
     {
         List<SyslogMessage> extract(Host host, ResultSet rs) throws SQLException;
     }
 
-    private static class DefaultResultSetExtractor implements ResultSetExtractor
+    private static class DefaultResultSetExtractor implements MessageDAO.ResultSetExtractor
     {
         @Override
         public List<SyslogMessage> extract(Host host, ResultSet rs) throws SQLException

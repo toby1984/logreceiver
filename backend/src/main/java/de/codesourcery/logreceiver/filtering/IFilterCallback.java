@@ -16,5 +16,8 @@ public interface IFilterCallback
 
     void visit(SyslogMessage message);
 
-    Predicate<SyslogMessage> getPredicate();
+    default Predicate<SyslogMessage> getPredicate()
+    {
+        throw new UnsupportedOperationException( "Not implemented - getPredicate()" );
+    }
 }

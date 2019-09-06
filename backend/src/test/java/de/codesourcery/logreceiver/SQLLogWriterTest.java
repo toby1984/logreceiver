@@ -7,6 +7,7 @@ import de.codesourcery.logreceiver.entity.SyslogMessage;
 import de.codesourcery.logreceiver.logstorage.ISQLLogStorage;
 import de.codesourcery.logreceiver.logstorage.SQLLogWriter;
 import de.codesourcery.logreceiver.storage.InMemoryHostIdManager;
+import de.codesourcery.logreceiver.util.EventBus;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -55,7 +56,8 @@ msg.year = (byte) 2019;
          ZoneId id = ZoneId.of( "UTC+0200" );
         msg.timestamp = ZonedDateTime.of( 2019,8,18,23,40,18,123, id);
         storage = new MockStorage();
-        writer = new SQLLogWriter(storage, new InMemoryHostIdManager(new Configuration()) );
+        writer = new SQLLogWriter(storage,
+                new InMemoryHostIdManager(new Configuration(), new EventBus()) );
     }
 
     @Test

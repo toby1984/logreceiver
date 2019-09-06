@@ -2,6 +2,8 @@ package de.codesourcery.logreceiver.storage;
 
 import de.codesourcery.logreceiver.entity.Configuration;
 import de.codesourcery.logreceiver.entity.Host;
+import de.codesourcery.logreceiver.events.HostAddedEvent;
+import de.codesourcery.logreceiver.util.EventBus;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -26,8 +28,11 @@ public class InMemoryHostIdManager implements IHostManager
 
     protected final Configuration config;
 
-    public InMemoryHostIdManager(Configuration config) {
+    private final EventBus eventBus;
+
+    public InMemoryHostIdManager(Configuration config,EventBus eventBus) {
         this.config = config;
+        this.eventBus = eventBus;
     }
 
     @Override
@@ -62,22 +67,29 @@ public class InMemoryHostIdManager implements IHostManager
     }
 
     @Override
-    public Host getOrCreateHost(InetAddress ip,  String hostname)
+    public final Host getOrCreateHost(InetAddress ip,  String hostname)
     {
+        Host host;
+        boolean isNewHost = false;
         synchronized (LOCK)
         {
-            Host host = hostsByIP.get(ip);
+            host = hostsByIP.get(ip);
             if ( host == null )
             {
                 if ( LOG.isTraceEnabled() ) {
                     LOG.trace("getOrCreateHostId(): Generating ID for "+ip+" ("+hostname+")");
                 }
                 host = generateHost(ip,hostname);
+                isNewHost = true;
                 hostsByIP.put( ip, host );
                 hostsById.put( host.id, host );
             }
-            return host;
         }
+        if ( isNewHost )
+        {
+            eventBus.send( new HostAddedEvent( host ) );
+        }
+        return host;
     }
 
     protected Host generateHost(InetAddress ip,String HostName)

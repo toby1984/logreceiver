@@ -4,6 +4,7 @@ import de.codesourcery.logreceiver.ui.auth.LoginRequired;
 import de.codesourcery.logreceiver.ui.dao.HostGroup;
 import de.codesourcery.logreceiver.ui.dao.IDatabaseBackend;
 import de.codesourcery.logreceiver.ui.dao.Subscription;
+import de.codesourcery.logreceiver.ui.dao.SubscriptionManager;
 import de.codesourcery.logreceiver.ui.util.ClickButton;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.wicket.Component;
@@ -35,7 +36,6 @@ import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.spring.injection.annot.SpringBean;
-import org.apache.wicket.validation.IValidatable;
 import org.apache.wicket.validation.IValidator;
 import org.apache.wicket.validation.ValidationError;
 
@@ -110,6 +110,9 @@ public class ManageSubscriptionsPage extends PageWithMenu
     @SpringBean
     private IDatabaseBackend backend;
 
+    @SpringBean
+    private SubscriptionManager subscriptionManager;
+
     final ISortableDataProvider<Subscription, MyColumns> dataProvider = new SortableDataProvider<>()
     {
         private List<Subscription> data;
@@ -131,7 +134,7 @@ public class ManageSubscriptionsPage extends PageWithMenu
         {
             if (data == null)
             {
-                data = backend.getSubscriptions(currentUser());
+                data = subscriptionManager.getSubscriptions(currentUser());
                 Comparator<Subscription> comp = (a, b) -> a.name.compareToIgnoreCase(b.name);
                 boolean ascending = true;
                 if (getSort() != null && getSort().getProperty() != null)
@@ -316,7 +319,7 @@ public class ManageSubscriptionsPage extends PageWithMenu
             {
                 try
                 {
-                    backend.saveSubscription(subscription );
+                    subscriptionManager.saveSubscription(subscription );
                     refresh(target );
                     modalWindow.close(target);
                 }
@@ -369,7 +372,7 @@ public class ManageSubscriptionsPage extends PageWithMenu
                     @Override
                     protected void onClick(Subscription sub,AjaxRequestTarget target)
                     {
-                        backend.deleteSubscription(sub);
+                        subscriptionManager.deleteSubscription(sub);
                         refresh(target);
                     }
                 };
@@ -379,7 +382,7 @@ public class ManageSubscriptionsPage extends PageWithMenu
                     @Override
                     protected void onUpdate(AjaxRequestTarget target)
                     {
-                        backend.saveSubscription( rowModel.getObject() );
+                        subscriptionManager.saveSubscription( rowModel.getObject() );
                     }
                 };
 

@@ -7,6 +7,8 @@ import java.util.List;
 
 public class PatternLogFormatter implements ILogFormatter
 {
+    public static final String DEFAULT_PATTERN = "%Y-%m-%d %H:%M:%s.%S%Z %D(%i) - %e - %t";
+
     private static final Transformer YEAR_FIELD = msg -> leftPad( Integer.toString( msg.timestamp.getYear() ), '0', 4 );
     private static final Transformer MONTH_FIELD = msg -> leftPad( Integer.toString( msg.timestamp.getMonthValue() ), '0', 2 );
     private static final Transformer DAY_FIELD = msg -> leftPad( Integer.toString( msg.timestamp.getDayOfMonth() ), '0', 2 );

@@ -1,5 +1,7 @@
 package de.codesourcery.logreceiver.entity;
 
+import de.codesourcery.logreceiver.formatting.PatternLogFormatter;
+
 import java.time.Duration;
 
 public class Configuration
@@ -28,7 +30,7 @@ public class Configuration
     public Duration staleBackendUnloadCheckInterval = Duration.ofMinutes( 30 );
 
     // UI
-    public String defaultLogDisplayPattern="%Y-%m-%d %H:%M:%s.%S%Z %D(%i) - %e - %t";
+    public String defaultLogDisplayPattern = PatternLogFormatter.DEFAULT_PATTERN;
 
     // user management
     public boolean strictPasswordPolicy=false;

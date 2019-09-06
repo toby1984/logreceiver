@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.time.Duration;
+import java.util.Objects;
 
 public class Host implements Serializable
 {
@@ -34,6 +35,21 @@ public class Host implements Serializable
         this.ip = other.ip;
         this.hostName = other.hostName;
         this.dataRetentionTime = other.dataRetentionTime;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if ( o instanceof Host) {
+            return this.id == ((Host) o).id;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Long.hashCode( this.id );
     }
 
     @JsonIgnore
