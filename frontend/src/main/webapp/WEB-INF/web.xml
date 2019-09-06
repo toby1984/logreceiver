@@ -24,6 +24,18 @@
     </init-param>
   </filter>
 
+  <filter>
+    <filter-name>intellij</filter-name>
+    <filter-class>de.codesourcery.logreceiver.ui.servlet.IntelliJFilter</filter-class>
+  </filter>
+
+  <!-- CAREFUL: Order of filter mappings equals invocation order of servlet filters -->
+
+  <filter-mapping>
+    <filter-name>intellij</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
   <filter-mapping>
     <filter-name>wicket</filter-name>
     <url-pattern>/ui/*</url-pattern>
