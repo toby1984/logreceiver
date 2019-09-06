@@ -24,8 +24,8 @@ public interface IDatabaseBackend
     int getHostGroupCount();
 
     // subscriptions
+    List<Subscription> getAllSubscriptions(boolean includeDisabled);
     List<Subscription> getSubscriptions(User user);
-    List<Subscription> getSubscriptions(Host host);
     void deleteSubscription(Subscription sub);
     void saveSubscription(Subscription sub);
 

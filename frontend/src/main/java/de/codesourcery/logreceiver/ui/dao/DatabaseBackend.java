@@ -62,6 +62,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             result.add( s );
             s.name = rs.getString( "name" );
             s.id = rs.getLong( "subscription_id" );
+            s.enabled = rs.getBoolean( "enabled" );
             userIdsBySubscriptionId.put( s.id, rs.getLong( "user_id" ) );
             hostGroupIdsBySubscriptionId.put( s.id, rs.getLong( "host_group_id" ) );
             s.expression = rs.getString("expression");
@@ -354,10 +355,11 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
 
     @Transactional
     @Override
-    public List<Subscription> getSubscriptions(Host host)
+    public List<Subscription> getAllSubscriptions(boolean includeDisabled)
     {
-        final String sql = "SELECT * FROM "+SUBSCRIPTIONS_TABLE+" WHERE host_id=?";
-        return jdbcTemplate.query(sql,SUBSCRIPTION_MAPPER,host.id);
+        final String whereClause = includeDisabled ? "" : " WHERE enabled=true";
+        final String sql = "SELECT * FROM "+SUBSCRIPTIONS_TABLE+whereClause;
+        return jdbcTemplate.query(sql,SUBSCRIPTION_MAPPER);
     }
 
     @Transactional
@@ -379,6 +381,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                 "      name text NOT NULL,\n" +
                 "      user_id bigint NOT NULL,\n" +
                 "      host_group_id bigint NOT NULL,\n" +
+                "      enabled boolean NOT NULL,\n" +
                 "      expression text NOT NULL,\n" +
                 "      max_batch_duration_minutes integer,\n" +
                 "      max_batch_size integer,\n" +
@@ -396,35 +399,38 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                        "user_id," +
                                        "name,"+
                                        "host_group_id," +
+                                       "enabled,"+
                                        "expression," +
                                        "max_batch_duration_minutes," +
                                        "max_batch_size," +
-                        "water_mark) VALUES (?,?,?,?,?,?,?)";
+                        "water_mark) VALUES (?,?,?,?,?,?,?,?)";
                 final PreparedStatement stmt = con.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
-                stmt.setLong( 1, sub.user.id );
-                stmt.setString( 2, sub.name );
-                stmt.setLong( 3, sub.hostGroup.id );
-                stmt.setString( 4, sub.expression);
+                int y = 1;
+                stmt.setLong( y++, sub.user.id );
+                stmt.setString( y++, sub.name );
+                stmt.setLong( y++, sub.hostGroup.id );
+                stmt.setBoolean( y++, sub.enabled );
+                stmt.setString( y++, sub.expression);
                 if ( sub.batchDuration == null ) {
-                    stmt.setNull( 5, Types.INTEGER );
+                    stmt.setNull( y++, Types.INTEGER );
                 }
                 else
                 {
-                    stmt.setObject( 5, sub.batchDuration.toMinutes() );
+                    stmt.setObject( y++, sub.batchDuration.toMinutes() );
                 }
                 if ( sub.maxBatchSize == null ) {
-                    stmt.setNull( 6, Types.INTEGER );
+                    stmt.setNull( y++, Types.INTEGER );
                 }
                 else
                 {
-                    stmt.setObject( 6, sub.maxBatchSize );
+                    stmt.setObject( y++, sub.maxBatchSize );
                 }
                 if ( sub.watermark == null ) {
-                    stmt.setNull( 7, Types.TIMESTAMP);
+                    stmt.setNull( y++, Types.TIMESTAMP);
                 }
                 else
                 {
-                    stmt.setObject( 7, Timestamp.valueOf( sub.watermark.toLocalDateTime() ) );
+                    stmt.setObject( y++, Timestamp.valueOf( sub.watermark.toLocalDateTime() ) );
                 }
                 return stmt;
             };
@@ -432,12 +438,13 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
             sub.id = ((Number) holder.getKeys().get("subscription_id")).longValue();
         } else {
             jdbcTemplate.update("UPDATE "+SUBSCRIPTIONS_TABLE+" SET user_id=?,name=?," +
-                                    "host_group_id=?,expression=?," +
+                                    "host_group_id=?,enabled=?,expression=?," +
                             "max_batch_duration_minutes=?,max_batch_size=?,water_mark=? WHERE" +
                                     " subscription_id=?",
                 sub.user.id,
                 sub.name,
                 sub.hostGroup.id,
+                sub.enabled,
                 sub.expression,
                 sub.batchDuration == null ? null : sub.batchDuration.toMinutes(),
                 sub.maxBatchSize,
@@ -486,6 +493,7 @@ public class DatabaseBackend implements IDatabaseBackend, ApplicationContextAwar
                                "                      name text NOT NULL,\n"+
                                "                      user_id bigint NOT NULL,\n" +
                                "                      host_group_id bigint NOT NULL,\n" +
+                               "                      enabled boolean NOT NULL,\n" +
                                "                      expression text NOT NULL,\n" +
                                "                      max_batch_duration_minutes integer,\n" +
                                "                      max_batch_size integer,\n" +

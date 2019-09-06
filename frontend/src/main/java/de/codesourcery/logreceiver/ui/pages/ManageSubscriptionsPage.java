@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.ajax.markup.html.form.AjaxCheckBox;
 import org.apache.wicket.extensions.ajax.markup.html.modal.ModalWindow;
 import org.apache.wicket.extensions.markup.html.repeater.data.grid.ICellPopulator;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.AbstractColumn;
@@ -373,7 +374,16 @@ public class ManageSubscriptionsPage extends PageWithMenu
                     }
                 };
 
-                frag.queue(editButton, deleteButton);
+                final AjaxCheckBox enabled = new AjaxCheckBox("enabled", new PropertyModel(rowModel,"enabled"))
+                {
+                    @Override
+                    protected void onUpdate(AjaxRequestTarget target)
+                    {
+                        backend.saveSubscription( rowModel.getObject() );
+                    }
+                };
+
+                frag.queue(editButton, deleteButton, enabled );
                 cellItem.add(frag);
             }
         });

@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 public class Subscription implements Serializable
 {
     public long id;
+    public boolean enabled=true;
     public User user;
     public String name;
     public HostGroup hostGroup;
