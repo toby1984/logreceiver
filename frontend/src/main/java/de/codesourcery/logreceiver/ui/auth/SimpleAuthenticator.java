@@ -2,7 +2,6 @@ package de.codesourcery.logreceiver.ui.auth;
 
 import de.codesourcery.logreceiver.ui.dao.IDatabaseBackend;
 import de.codesourcery.logreceiver.ui.dao.User;
-import jdk.jshell.spi.ExecutionControl;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

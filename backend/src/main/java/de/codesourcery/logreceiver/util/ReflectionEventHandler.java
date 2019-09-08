@@ -6,12 +6,14 @@ import org.apache.logging.log4j.Logger;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ReflectionEventHandler implements EventBus.IEventHandler
 {
@@ -35,7 +37,7 @@ public class ReflectionEventHandler implements EventBus.IEventHandler
     {
         Method bestMatch = getBestMatch( event );
         if ( bestMatch != null ) {
-            bestMatch.invoke( event );
+            bestMatch.invoke( targetSupplier.get(), event );
             return true;
         }
         return false;
@@ -79,7 +81,11 @@ public class ReflectionEventHandler implements EventBus.IEventHandler
     {
         final Object bean = targetSupplier.get();
         final Class<?> beanClass = bean.getClass();
-        return Stream.of( beanClass.getMethods() )
+        final Set<Method> allMethods = new HashSet<>();
+        allMethods.addAll( Arrays.asList( beanClass.getDeclaredMethods() ) );
+        allMethods.addAll( Arrays.asList( beanClass.getMethods() ) );
+
+        return allMethods.stream()
                 .filter( ReflectionEventHandler::isSuitableMethod )
                 .collect( Collectors.toList());
     }
@@ -93,36 +99,37 @@ public class ReflectionEventHandler implements EventBus.IEventHandler
         if ( argumentClass == eventClass ) {
             return dist;
         }
+        if ( ! argumentClass.isAssignableFrom( eventClass ) ) {
+            return -1;
+        }
         Class<?> best = null;
         int bestDistance = -1;
-        for ( Class<?> iFace : argumentClass.getInterfaces() ) {
-            int d = getDistanceToEventClass( iFace, eventClass, dist+1 );
+        for ( Class<?> iFace : eventClass.getInterfaces() ) {
+            int d = getDistanceToEventClass( argumentClass, iFace, dist+1 );
             if ( d >= 0 && ( best == null || d < bestDistance ) ) {
                 bestDistance = d;
                 best = iFace;
             }
         }
-        if ( ! argumentClass.isInterface() ) {
-            Class<?> clazz = argumentClass.getSuperclass();
-            int depth = 1;
-            while ( clazz != Object.class )
-            {
-                int d = getDistanceToEventClass( clazz, eventClass, dist+depth );
-                if ( d >= 0 && ( best == null || d < bestDistance ) ) {
-                    best = clazz;
-                    bestDistance = d;
-                }
-                if ( d == 0 ) {
-                    break;
-                }
-                depth++;
-                clazz = clazz.getSuperclass();
+        Class<?> clazz = eventClass.getSuperclass();
+        int depth = 1;
+        while ( clazz != Object.class )
+        {
+            int d = getDistanceToEventClass( argumentClass, clazz, dist+depth );
+            if ( d >= 0 && ( best == null || d < bestDistance ) ) {
+                best = clazz;
+                bestDistance = d;
             }
+            if ( d == 0 ) {
+                break;
+            }
+            depth++;
+            clazz = clazz.getSuperclass();
         }
         if ( best == null ) {
             return -1;
         }
-        return dist;
+        return bestDistance;
     }
 
     private static boolean isSuitableMethod(Method m)
@@ -130,10 +137,12 @@ public class ReflectionEventHandler implements EventBus.IEventHandler
         final int flags = m.getModifiers();
         if ( m.getAnnotation(Subscribe.class) != null )
         {
+            System.out.println("Checking "+m);
             if ( ! Modifier.isStatic( flags ) &&
                     Modifier.isPublic( flags ) &&
                     ! Modifier.isAbstract( flags ) &&
                     m.getParameterCount() == 1 &&
+                    m.getReturnType() == Void.TYPE &&
                     IEvent.class.isAssignableFrom( m.getParameterTypes()[0] ) )
             {
                 return true;
