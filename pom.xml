@@ -13,7 +13,7 @@
     <servlet.version>4.0.1</servlet.version>
     <log4j.version>2.15.0</log4j.version>
     <spring.version>5.2.22.RELEASE</spring.version>
-    <jackson.version>2.12.1</jackson.version>
+    <jackson.version>2.12.6.1</jackson.version>
   </properties>
 
   <dependencyManagement>
